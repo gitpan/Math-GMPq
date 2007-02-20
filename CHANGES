@@ -1,0 +1,5 @@
+0.10
+ - First CPAN release
+ - No longer assign Exporter and DynaLoader to @Math::GMPq::ISA.
+ - Add support for perls built with use64bitint
+ - add new() function/method to facilitate initialization/assignment
