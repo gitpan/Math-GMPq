@@ -24,9 +24,9 @@ use overload
     '!'    => \&overload_not,
     'not'  => \&overload_not,
     '='    => \&overload_copy,
+    'int'  => \&overload_int,
     'abs'  => \&overload_abs;
 
-    @Math::GMPq::ISA = qw(Exporter DynaLoader);
     @Math::GMPq::EXPORT_OK = qw(
 Rmpq_abs Rmpq_add Rmpq_canonicalize Rmpq_clear Rmpq_cmp Rmpq_cmp_si Rmpq_cmp_ui
 Rmpq_create_noval Rmpq_denref Rmpq_div Rmpq_div_2exp Rmpq_equal Rmpq_get_d 
@@ -35,7 +35,7 @@ Rmpq_inv Rmpq_mul Rmpq_mul_2exp Rmpq_neg Rmpq_numref Rmpq_out_str Rmpq_printf
 Rmpq_set Rmpq_set_d Rmpq_set_den Rmpq_set_f Rmpq_set_num Rmpq_set_si Rmpq_set_str
 Rmpq_set_ui Rmpq_set_z Rmpq_sgn Rmpq_sub Rmpq_swap
     );
-    $Math::GMPq::VERSION = '0.10';
+    $Math::GMPq::VERSION = '0.11';
 
     DynaLoader::bootstrap Math::GMPq $Math::GMPq::VERSION;
 
@@ -51,81 +51,83 @@ Rmpq_set_ui Rmpq_set_z Rmpq_sgn Rmpq_sub Rmpq_swap
 sub dl_load_flags {0} # Prevent DynaLoader from complaining and croaking
 
 sub new {
-    if(@_ > 3) {die "Too many arguments supplied to new()"}
+
+    # This function caters for 2 possibilities:
+    # 1) that 'new' has been called OOP style - in which 
+    #    case there will be a maximum of 3 args
+    # 2) that 'new' has been called as a function - in
+    #    which case there will be a maximum of 2 args.
+    # If there are no args, then we just want to return an
+    # initialized Math::GMPq
     if(!@_) {return Rmpq_init()}
-    if(ref($_[0]) || $_[0] ne "Math::GMPq") {
-      my $ret = Rmpq_init();
-      my $type = _itsa($_[0]);
+   
+    if(@_ > 3) {die "Too many arguments supplied to new()"}
 
-      if(!$type) {die "Inappropriate argument supplied to new()"}
+    # If 'new' has been called OOP style, the first arg is the string
+    # "Math::GMPq" which we don't need - so let's remove it. However,
+    # if the first arg is a Math::GMPq object (which is a possibility),
+    # then we'll get a fatal error when we check it for equivalence to
+    # the string "Math::GMPq". So we first need to check that it's not
+    # an object - which we'll do by using the ref() function:
+    if(!ref($_[0]) && $_[0] eq "Math::GMPq") {
+      shift;
+      if(!@_) {return Rmpq_init()}
+      } 
 
-      if($type == 1 || $type == 2) { # UOK or IOK
-        if(@_ > 1) {die "Too many arguments supplied to new() - expected only one"}
-        Rmpq_set_str($ret, $_[0], 10);
-        return $ret;
+    # @_ can now contain a maximum of 2 args - the value, and iff the value is
+    # a string, (optionally) the base of the numeric string.
+    if(@_ > 2) {die "Too many arguments supplied to new() - expected no more than two"}
 
-      }
-      if($type == 3) { # NOK
-        if(@_ > 1) {die "Too many arguments supplied to new() - expected only one"}
-        Rmpq_set_d($ret, $_[0]);
-        return $ret;
-      }
-      if($type == 4) { # POK
-        if(@_ > 2) {die "Too many arguments supplied to new() - expected no more than two"}
-        if(@_ == 2) {
-          Rmpq_set_str($ret, $_[0], $_[1]);
-          Rmpq_canonicalize($ret);
-          return $ret;
-        }
-        else {
-          Rmpq_set_str($ret, $_[0], 0);
-          Rmpq_canonicalize($ret);
-          return $ret;
-        }
-      }
-      if($type == 5) { # Math::GMPq object
-        if(@_ > 1) {die "Too many arguments supplied to new() - expected only one"}
-        Rmpq_set($ret, $_[0]);
-        return $ret;
-      }
-    }
+    my ($arg1, $type, $base);
 
-    if($_[0] ne "Math::GMPq") {die "Invalid argument supplied to new()"} 
+    # $_[0] is the value, $_[1] (if supplied) is the base of the number
+    # in the string $[_0].
+    $arg1 = shift;
+    $base = 0;
 
-    if(@_ == 1) {return Rmpq_init()}
-
-    my $type = _itsa($_[1]);
-    my $ret = Rmpq_init();
-
+    $type = _itsa($arg1);
     if(!$type) {die "Inappropriate argument supplied to new()"}
 
+    my $ret = Rmpq_init();
+
+    # Create a Math::GMPq object that has $arg1 as its value.
+    # Die if there are any additional args (unless $type == 4)
     if($type == 1 || $type == 2) { # UOK or IOK
-      if(@_ > 2) {die "Too many arguments supplied to new() - expected only two"}
-      Rmpq_set_str($ret, $_[1], 10);
+      if(@_ ) {die "Too many arguments supplied to new() - expected only one"}
+      Rmpq_set_str($ret, $arg1, 10);
       return $ret;
     }
+
     if($type == 3) { # NOK
-      if(@_ > 2) {die "Too many arguments supplied to new() - expected only two"}
-      Rmpq_set_d($ret, $_[1]);
+      if(@_ ) {die "Too many arguments supplied to new() - expected only one"}
+      if(Math::GMPq::_has_longdouble()) {
+        _Rmpq_set_ld($ret, $arg1);
+        return $ret;
+      }
+      Rmpq_set_d($ret, $arg1);
       return $ret;
     }
+    
     if($type == 4) { # POK
-      if(@_ == 3) {
-        Rmpq_set_str($ret, $_[1], $_[2]);
-        Rmpq_canonicalize($ret);
-        return $ret;
-      }
-      else {
-        Rmpq_set_str($ret, $_[1], 0);
-        Rmpq_canonicalize($ret);
-        return $ret;
-      }
-    }
-    if($type == 5) { # Math::GMPq object
-      if(@_ > 2) {die "Too many arguments supplied to new() - expected only two"}
-      Rmpq_set($ret, $_[1]);
+      if(@_ > 1) {die "Too many arguments supplied to new() - expected no more than two"}
+      $base = shift if @_;
+      if($base < 0 || $base == 1 || $base > 36) {die "Invalid value for base"}
+      Rmpq_set_str($ret, $arg1, $base);
+      Rmpq_canonicalize($ret);
       return $ret;
     }
+
+    if($type == 7) { # Math::GMPq object
+      if(@_) {die "Too many arguments supplied to new() - expected only one"}
+      Rmpq_set($ret, $arg1);
+      return $ret;
+    }
+}
+
+sub Rmpq_out_str {
+    if(@_ == 2) { return _Rmpq_out_str($_[0], $_[1]) }
+    elsif(@_ == 3) { return _Rmpq_out_str2($_[0], $_[1], $_[2]) }
+    else {die "Wrong number of arguments supplied to Rmpq_out_str()"}
 }
 
 sub _rewrite {
@@ -153,7 +155,7 @@ sub _rewrite {
 }
 
 sub Rmpq_printf {
-    local($| = 1); # Make sure the output gets presented in the correct sequence.
+    local $| = 1; # Make sure the output gets presented in the correct sequence.
     if(@_ == 1) {printf(shift)}
 
     else {
@@ -493,11 +495,14 @@ __END__
    file (as well as to stdout). As provided here,
    the functions read/write from/to stdout only.
 
-   $bytes_written = Rmpq_out_str($op, $base);
+   $bytes_written = Rmpq_out_str($op, $base [, $suffix]);
     Output $op to STDOUT, as a string of digits in base $base.
     The base may vary from 2 to 36. Output is in the form `num/den'
     or if the denominator is 1 then just `num'. Return the number
     of bytes written, or if an error occurred, return 0.
+    The optional third argument ($suffix) is a string (eg "\n") that
+    will be appended to the output. $bytes_written does not include
+    the bytes contained in $suffix.
 
    $bytes_read = Rmpq_inp_str($rop, $base);
     Read a string of digits from STDIN and convert them to a rational
@@ -677,6 +682,23 @@ __END__
     numbered arguments.
 
    ################
+
+=head1 BUGS
+
+   You can get segfaults if you pass the wrong type of
+   argument to the functions - so if you get a segfault, the
+   first thing to do is to check that the argument types 
+   you have supplied are appropriate.
+
+=head1 TERMS AND CONDITIONS
+
+   Use this module for whatever you like. It's free and comes
+   with no guarantees - except that the purchase price is
+   fully refundable if you're dissatisfied with it.
+
+=head1 AUTHOR
+
+  Copyright Sisyhpus <sisyphus at(@) cpan dot (.) org>
 
 
 =cut

@@ -4,6 +4,8 @@ use Math::GMPq qw(:mpq);
 
 print "1..20\n";
 
+print "# Using gmp version ", Math::GMPq::gmp_v(), "\n";
+
 my($have_mpz, $have_mpf) = (0, 0);
 my($f, $z);
 

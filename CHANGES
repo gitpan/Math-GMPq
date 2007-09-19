@@ -1,3 +1,12 @@
+0.11
+ - Add overloaded int() function
+ - Rewrite new()
+ - Rmpq_out_str() now takes an optional third argument - a string
+   that will be appended to the mpq_out_str() output. Also stdout is
+   fflush()'d each time Rmpq_out_str() is called.
+ - The overload functions and new() can now handle a long double value
+   correctly
+
 0.10
  - First CPAN release
  - No longer assign Exporter and DynaLoader to @Math::GMPq::ISA.

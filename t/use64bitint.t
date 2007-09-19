@@ -5,7 +5,12 @@ use Config;
 
 print "1..1\n";
 
-my $_64 = defined($Config::Config{use64bitint}) ? 1 : 0;
+print "# Using gmp version ", Math::GMPq::gmp_v(), "\n";
+
+my $_64 = Math::GMPq::_has_longlong();
+
+if($_64) {print "Using 64-bit integer\n"}
+else {print "Using 32-bit integer\n"}
 my $ok;
 
 if($_64) {

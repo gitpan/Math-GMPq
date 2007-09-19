@@ -8,7 +8,10 @@ check.c
 comp.c
 version.c
 t/test1.t
+t/longdouble.t
 t/overload.t
 t/use64bitint.t
 t/new.t
 t/not_zero.t
+t/out_str.t
+typemap

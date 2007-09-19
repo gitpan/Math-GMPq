@@ -3,6 +3,48 @@ use Config;
 
 $| = 1;
 
+$use_64_bit_int = 0; # Let perl decide whether to include 64-bit 'long long' support
+$use_long_double = 0;# Let perl decide whether to include 'long double' support
+
+#$use_64_bit_int = -1; # Force exclusion of 64-bit 'long long' support
+#$use_long_double = -1;# Force exclusion of 'long double' support
+
+#$use_64_bit_int = 1; # Force inclusion of 64-bit 'long long' support
+#$use_long_double = 1;# Force inclusion of 'long double' support
+
+#### Define some globals for later use ###
+$CC = $Config{cc};
+%args = map{split /\s*=\s*/} @ARGV;
+$LIBS = $args{LIBS} || '-lgmp';
+$INC = $args{INC};
+$redirect = $^O =~ /mswin32/i ? '>NUL 2>&1' : '2>/dev/null';
+$cl_libs = '';
+
+if($CC eq 'cl') {
+  my $fix_slashes = $LIBS;
+  $fix_slashes =~ s/\\/\//g; # Just in case backslashes have been used.
+  my @elements = split /\-L/, $fix_slashes;
+
+  for(@elements) {
+     next if $_ !~ /\-l/;
+     my @temp = split /\-l/, $_;
+
+     $temp[0] =~ s/ +//;
+     if($temp[0] && (substr($temp[0], -1, 1) ne '/')) {$temp[0] .= '/'}
+
+     for(my $i = 1; $i < @temp; $i++) {
+        $temp[$i] = 'lib' . $temp[$i];
+        $temp[$i] =~ s/ +//;
+        $cl_libs .= $temp[0] . $temp[$i] . $Config{lib_ext} . ' ';
+     }
+  }
+  $cl_libs = "$INC $cl_libs";
+  $cl_libs =~ s/\//\\/g; # We need backslashes.
+}
+
+else {$cl_libs = "$INC $LIBS"}
+### End of globals configuration ###
+
 print "Checking for a C compiler ....";
 
 if(!have_compiler()) {
@@ -91,12 +133,33 @@ sisyphus at cpan dot org
 }
 
 my $defines = $] < 5.008 ? "-DOLDPERL" : "-DNEWPERL";
-if($Config::Config{use64bitint} eq 'define' || 
-   $Config::Config{use64bitall} eq 'define' ||
-   $Config::Config{usemorebits} eq 'define') {$defines .= " -DUSE_64_BIT_INT"}
 
-if($Config::Config{uselongdouble} eq 'define' ||
-   $Config::Config{usemorebits} eq 'define') {$defines .= " -DUSE_LONG_DOUBLE"}
+if($use_64_bit_int == -1) {}                                
+elsif($use_64_bit_int == 1) {$defines .= " -DUSE_64_BIT_INT"}
+else {
+  if($Config::Config{use64bitint} eq 'define' || 
+     $Config::Config{use64bitall} eq 'define' ||
+     $Config::Config{usemorebits} eq 'define' ||
+     $Config::Config{ivsize} == 8 ) {$defines .= " -DUSE_64_BIT_INT"}
+}
+
+if($use_long_double == -1) {}
+elsif($use_long_double == 1) {$defines .= " -DUSE_LONG_DOUBLE"}
+else {
+  if($Config::Config{uselongdouble} eq 'define' ||
+     $Config::Config{usemorebits} eq 'define' ||
+     $Config::Config{nvsize} > 8 ) {$defines .= " -DUSE_LONG_DOUBLE"}
+}
+
+$defines =~ /-DUSE_64_BIT_INT/ ? print "Building with 64-bit'long long' support\n" :
+                                 print "Building without 64-bit 'long long' support\n";
+
+print "If this is wrong, see the \"64-bit support\" section in the README\n\n";
+
+$defines =~ /-DUSE_LONG_DOUBLE/ ? print "Building with 'long double' support\n" :
+                                 print "Building without 'long double' support\n";
+
+print "If this is wrong, see the \"64-bit support\" section in the README\n\n";
 
 my %options = %{       
 {
@@ -106,7 +169,7 @@ my %options = %{
     '-lgmp'
   ],
   VERSION_FROM => 'GMPq.pm',
-  clean   => { FILES => 'comp.exe check.exe version.exe' },
+  clean   => { FILES => 'comp.exe check.exe version.exe comp.exe.manifest check.exe.manifest version.exe.manifest' },
 }
 };
 WriteMakefile(%options);
@@ -115,82 +178,26 @@ WriteMakefile(%options);
 sub MY::makefile { '' }
 
 sub have_compiler {
-    if($^O =~ /mswin32/i) {
-      if(system("$Config{cc} -o comp.exe comp.c >NUL 2>&1") == 0) {return 1}
-      else {return 0}
-      }
-
-    else {
-      if(system("$Config{cc} -o comp.exe comp.c 2>/dev/null") == 0) {return 1}
-      else {return 0}
-      }
+   my $middle = $Config{cc} eq 'cl' ? '' : '-o comp.exe';
+   if(system("$Config{cc} $middle comp.c $redirect") == 0) {return 1}
+   else {return 0}
 }
 
 sub have_libraries {
-    my $CC = $Config{cc};
-    my %args = map{split /\s*=\s*/} @ARGV;
-    my $LIBS = $args{LIBS} || $libs;
-    my $INC = $args{INC};
-
-    if($^O =~ /mswin32/i) {
-      if($CC eq 'cl') {
-        $INC =~ s/-I/\/I/g;
-        if($LIBS eq '-lgmp') {$LIBS = 'libgmp.lib'}
-        else {
-          $LIBS =~ s/-L//g;
-          $LIBS =~ s/ -lgmp/\/libgmp.lib/;
-          }
-
-        if(system("$CC -o check.exe check.c $INC $LIBS >NUL 2>&1") == 0) {return 1}
-        else {return 0}
-        }
-      if(system("$CC -o check.exe check.c $INC $LIBS >NUL 2>&1") == 0) {return 1}
-      else {return 0}
-      }
-
-    else {
-      if(system("$CC -o check.exe check.c $INC $LIBS 2>/dev/null") == 0) {return 1}
-      else {return 0}
-      }
+   my $middle = $Config{cc} eq 'cl' ? '' : '-o check.exe';
+   if(system("$CC $middle check.c $cl_libs $redirect") == 0) {return 1}
+   else {return 0}
 }
 
 sub get_version {
-    my $CC = $Config{cc};
-    my %args = map{split /\s*=\s*/} @ARGV;
-    my $LIBS = $args{LIBS} || '-lgmp';
-    my $INC = $args{INC};
-
-    if($^O =~ /mswin32/i) {
-      if($CC eq 'cl') {
-        $INC =~ s/-I/\/I/g;
-        if($LIBS eq '-lgmp') {$LIBS = 'libgmp.lib'}
-        else {
-          $LIBS =~ s/-L//g;
-          $LIBS =~ s/ -lgmp/\/libgmp.lib/;
-          }
-        unless(system("$CC -o version.exe version.c $INC $LIBS >NUL 2>&1") == 0) {return 1}
-        my $v = `version.exe`;
-        my @v = split /\./, $v;
-        if($v[0] > 4 || ($v[0] == 4 && $v[1] >= 2 && $v[2] >= 0)) {return 2}
-        print "\nYou have GMP version $v\n";
-        return 0;
-        }
-      unless(system("$CC -o version.exe version.c $INC $LIBS >NUL 2>&1") == 0) {return 1}
-      my $v = `version.exe`;
-      my @v = split /\./, $v;
-      if($v[0] > 4 || ($v[0] == 4 && $v[1] >= 2 && $v[2] >= 0)) {return 2}
-      print "\nYou have GMP version $v\n";
-      return 0;
-      }
-
-    else {
-      unless(system("$CC -o version.exe version.c $INC $LIBS 2>/dev/null") == 0) {return 1}
-      my $v = `./version.exe`;
-      my @v = split /\./, $v;
-      if($v[0] > 4 || ($v[0] == 4 && $v[1] >= 2 && $v[2] >= 0)) {return 2}
-      print "\nYou have GMP version $v\n";
-      return 0;
-      }
+   my $middle = $Config{cc} eq 'cl' ? '' : '-o version.exe';
+   unless(system("$CC $middle version.c $cl_libs $redirect") == 0) {return 1}
+   my $v = $^O =~ /mswin32/i ? `version.exe` : `./version.exe`;
+   my @v = split /\./, $v;
+   if($v[0] == 4 && $v[1] >= 2 && $v[2] >= 0) {return 2}
+   print "\nYou have GMP version $v\n";
+   return 0;
 }
+
 
 

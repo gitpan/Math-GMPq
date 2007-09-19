@@ -6,6 +6,8 @@ use Config;
 
 print "1..4\n";
 
+print "# Using gmp version ", Math::GMPq::gmp_v(), "\n";
+
 my $ui = 123569;
 my $si = -19907;
 my $d = -1.625;
@@ -114,7 +116,7 @@ my $bi = Math::BigInt->new(123456789);
 $ok = '';
 
 eval{my $f30 = Math::GMPq->new(17, 12);};
-if($@ =~ /Too many arguments supplied to new\(\) \- expected only two/) {$ok = 'a'}
+if($@ =~ /Too many arguments supplied to new\(\) \- expected only one/) {$ok = 'a'}
 
 eval{my $f31 = Math::GMPq::new(17, 12);};
 if($@ =~ /Too many arguments supplied to new\(\) \- expected only one/) {$ok .= 'b'}
@@ -131,6 +133,12 @@ if($@ =~ /Inappropriate argument/) {$ok .= 'e'}
 eval{my $f35 = Math::GMPq::new($bi);};
 if($@ =~ /Inappropriate argument/) {$ok .= 'f'}
 
-if($ok eq 'abcdef') {print "ok 4\n"}
+eval{my $f30 = Math::GMPq->new($f27, 12);};
+if($@ =~ /Too many arguments supplied to new\(\) \- expected only one/) {$ok .= 'g'}
+
+eval{my $f31 = Math::GMPq::new($f27, 12);};
+if($@ =~ /Too many arguments supplied to new\(\) \- expected only one/) {$ok .= 'h'}
+
+if($ok eq 'abcdefgh') {print "ok 4\n"}
 else {print "not ok 4 $ok\n"}
 

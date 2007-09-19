@@ -8,6 +8,8 @@ use Config;
 
 print"1..3\n";
 
+print "# Using gmp version ", Math::GMPq::gmp_v(), "\n";
+
 my $n = ~0;
 
 my $gmpq1 = Math::GMPq::new($n);
