@@ -577,6 +577,9 @@ if($@ =~ /Invalid argument/) {$ok .= 'i'}
 if($ok eq 'abcdfghi') {print "ok 34\n"}
 else {print "not ok 34 $ok\n"}
 
-Rmpq_set_ui($p, 27, 7);
-if(int($p) == 3) {print "ok 35\n"}
-else {print "not ok 35\n"}
+if($] >= 5.008) {
+  Rmpq_set_ui($p, 27, 7);
+  if(int($p) == 3) {print "ok 35\n"}
+  else {print "not ok 35\n"}
+}
+else {print "ok 35 - skipped - no overloading of 'int()' on perl $] \n"}

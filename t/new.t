@@ -15,6 +15,9 @@ my $str = '-119125/1000';
 
 my $ok = '';
 
+my $f000 = new Math::GMPq('z/1', 62);
+if($f000 == 61) {$ok .= 'a'}
+
 my $f00 = new Math::GMPq();
 Rmpq_set_ui($f00, $ui, 1);
 if($f00 == $ui) {$ok .= 'b'}
@@ -37,13 +40,16 @@ if($f05 == $str) {$ok .= 'g'}
 my $f06 = new Math::GMPq($d);
 if($f06 == $d) {$ok .= 'h'}
 
-if($ok eq 'bcdefgh') {print "ok 1\n"}
+if($ok eq 'abcdefgh') {print "ok 1\n"}
 else {print "not ok 1 $ok\n"}
 
 #############################
 
 
 $ok = '';
+
+my $f09 = Math::GMPq::new('z/1', 62);
+if($f09 == 61) {$ok .= 'a'}
 
 my $f10 = Math::GMPq::new();
 Rmpq_set_ui($f10, $ui, 1);
@@ -67,12 +73,15 @@ if($f15 == $str) {$ok .= 'g'}
 my $f16 = Math::GMPq::new($d);
 if($f16 == $d) {$ok .= 'h'}
 
-if($ok eq 'bcdefgh') {print "ok 2\n"}
+if($ok eq 'abcdefgh') {print "ok 2\n"}
 else {print "not ok 2 $ok\n"}
 
 ################################
 
 $ok = '';
+
+my $f19 = Math::GMPq->new('z/1', 62);
+if($f19 == 61) {$ok .= 'a'}
 
 my $f20 = Math::GMPq->new();
 Rmpq_set_ui($f20, $ui, 1);
@@ -106,7 +115,7 @@ else {
   if($f27 != $f28) {$ok .= 'i'}
 }
 
-if($ok eq 'bcdefghi') {print "ok 3\n"}
+if($ok eq 'abcdefghi') {print "ok 3\n"}
 else {print "not ok 3 $ok\n"}
 
 #############################
@@ -139,6 +148,9 @@ if($@ =~ /Too many arguments supplied to new\(\) \- expected only one/) {$ok .= 
 eval{my $f31 = Math::GMPq::new($f27, 12);};
 if($@ =~ /Too many arguments supplied to new\(\) \- expected only one/) {$ok .= 'h'}
 
-if($ok eq 'abcdefgh') {print "ok 4\n"}
+eval{my $f32 = Math::GMPq->new($str, -1);};
+if($@ =~ /Invalid value for base/) {$ok .= 'i'}
+
+if($ok eq 'abcdefghi') {print "ok 4\n"}
 else {print "not ok 4 $ok\n"}
 

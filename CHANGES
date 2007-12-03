@@ -1,3 +1,10 @@
+0.23
+ - Add TRmpq_out_str and TRmpq_inp_str.
+ - Rmpq_out_str now takes an optional (leading) string argument - a
+   string that will be prepended to the mpq_out_str() output.
+ - Remove the tests in the Makefile.PL that test for the presence of
+   a suitable compiler and GMP library.
+
 0.11
  - Add overloaded int() function
  - Rewrite new()

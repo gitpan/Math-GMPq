@@ -96,7 +96,7 @@ void Rmpq_set_si(mpq_t * p1, SV * p2, SV * p3) {
 
 void Rmpq_set_str(mpq_t * p1, SV * p2, SV * base) {
      unsigned long b = SvUV(base);
-     if(b == 1 || b > 36) croak ("%u is not a valid base in Rmpq_set_str", b);
+     if(b == 1 || b > 62) croak ("%u is not a valid base in Rmpq_set_str", b);
      if(mpq_set_str(*p1, SvPV_nolen(p2), SvUV(base)))
        croak("String supplied to Rmpq_set_str function is not a valid base %u number", SvUV(base));   
 }
@@ -217,7 +217,7 @@ SV * _Rmpq_out_str(mpq_t * p, SV *base){
      return newSVuv(ret);
 }
 
-SV * _Rmpq_out_str2(mpq_t * p, SV * base, SV * suff) {
+SV * _Rmpq_out_strS(mpq_t * p, SV * base, SV * suff) {
      unsigned long ret;
      if(SvIV(base) < 2 || SvIV(base) > 36)
        croak("2nd argument supplied to Rmpq_out_str is out of allowable range (must be between 2 and 36 inclusive)");
@@ -227,8 +227,87 @@ SV * _Rmpq_out_str2(mpq_t * p, SV * base, SV * suff) {
      return newSVuv(ret);
 }
 
+SV * _Rmpq_out_strP(SV * pre, mpq_t * p, SV * base) {
+     unsigned long ret;
+     if(SvIV(base) < 2 || SvIV(base) > 36)
+       croak("2nd argument supplied to Rmpq_out_str is out of allowable range (must be between 2 and 36 inclusive)");
+     printf("%s", SvPV_nolen(pre));
+     ret = mpq_out_str(NULL, SvUV(base), *p);
+     fflush(stdout);
+     return newSVuv(ret);
+}
+
+SV * _Rmpq_out_strPS(SV * pre, mpq_t * p, SV * base, SV * suff) {
+     unsigned long ret;
+     if(SvIV(base) < 2 || SvIV(base) > 36)
+       croak("2nd argument supplied to Rmpq_out_str is out of allowable range (must be between 2 and 36 inclusive)");
+     printf("%s", SvPV_nolen(pre));
+     ret = mpq_out_str(NULL, SvUV(base), *p);
+     printf("%s", SvPV_nolen(suff));
+     fflush(stdout);
+     return newSVuv(ret);
+}
+
+SV * _TRmpq_out_str(PerlIO * stream, SV * base, mpq_t * p) {
+     size_t ret;
+     FILE * stdio_stream = PerlIO_exportFILE(stream, NULL);
+     ret = mpq_out_str(stdio_stream, (int)SvIV(base), *p);
+     fflush(stdio_stream);
+     PerlIO_releaseFILE(stream, stdio_stream);
+     //PerlIO_flush(stream);
+     return newSVuv(ret);
+}
+
+SV * _TRmpq_out_strS(PerlIO * stream, SV * base, mpq_t * p, SV * suff) {
+     size_t ret;
+     FILE * stdio_stream = PerlIO_exportFILE(stream, NULL);
+     ret = mpq_out_str(stdio_stream, (int)SvIV(base), *p);
+     fflush(stdio_stream);
+     PerlIO_releaseFILE(stream, stdio_stream);
+     PerlIO_printf(stream, "%s", SvPV_nolen(suff));
+     PerlIO_flush(stream);
+     return newSVuv(ret);
+}
+
+SV * _TRmpq_out_strP(SV * pre, PerlIO * stream, SV * base, mpq_t * p) {
+     size_t ret;
+     FILE * stdio_stream = PerlIO_exportFILE(stream, NULL);
+     PerlIO_printf(stream, "%s", SvPV_nolen(pre));
+     PerlIO_flush(stream);
+     ret = mpq_out_str(stdio_stream, (int)SvIV(base), *p);
+     fflush(stdio_stream);
+     PerlIO_releaseFILE(stream, stdio_stream);
+     return newSVuv(ret);
+}
+
+SV * _TRmpq_out_strPS(SV * pre, PerlIO * stream, SV * base, mpq_t * p, SV * suff) {
+     size_t ret;
+     FILE * stdio_stream = PerlIO_exportFILE(stream, NULL);
+     PerlIO_printf(stream, "%s", SvPV_nolen(pre));
+     PerlIO_flush(stream);
+     ret = mpq_out_str(stdio_stream, (int)SvIV(base), *p);
+     fflush(stdio_stream);
+     PerlIO_releaseFILE(stream, stdio_stream);
+     PerlIO_printf(stream, "%s", SvPV_nolen(suff));
+     PerlIO_flush(stream);
+     return newSVuv(ret);
+}
+
+SV * TRmpq_inp_str(mpq_t * p, PerlIO * stream, SV * base) {
+     size_t ret;
+     FILE * stdio_stream = PerlIO_exportFILE(stream, NULL);
+     ret = mpq_inp_str(*p, stdio_stream, (int)SvIV(base));
+     fflush(stdio_stream);
+     PerlIO_releaseFILE(stream, stdio_stream);
+     //PerlIO_flush(stream);
+     return newSVuv(ret);
+}
+
 SV * Rmpq_inp_str(mpq_t * p, SV *base){
-     return newSVuv(mpq_inp_str(*p, NULL, SvUV(base)));
+     size_t ret;
+     ret = mpq_inp_str(*p, NULL, SvUV(base));
+     fflush(stdin);
+     return newSVuv(ret);
 }
 
 void Rmpq_numref(mpz_t * z, mpq_t * r) {
@@ -1809,10 +1888,57 @@ _Rmpq_out_str (p, base)
 	SV *	base
 
 SV *
-_Rmpq_out_str2 (p, base, suff)
+_Rmpq_out_strS (p, base, suff)
 	mpq_t *	p
 	SV *	base
 	SV *	suff
+
+SV *
+_Rmpq_out_strP (pre, p, base)
+	SV *	pre
+	mpq_t *	p
+	SV *	base
+
+SV *
+_Rmpq_out_strPS (pre, p, base, suff)
+	SV *	pre
+	mpq_t *	p
+	SV *	base
+	SV *	suff
+
+SV *
+_TRmpq_out_str (stream, base, p)
+	PerlIO *	stream
+	SV *	base
+	mpq_t *	p
+
+SV *
+_TRmpq_out_strS (stream, base, p, suff)
+	PerlIO *	stream
+	SV *	base
+	mpq_t *	p
+	SV *	suff
+
+SV *
+_TRmpq_out_strP (pre, stream, base, p)
+	SV *	pre
+	PerlIO *	stream
+	SV *	base
+	mpq_t *	p
+
+SV *
+_TRmpq_out_strPS (pre, stream, base, p, suff)
+	SV *	pre
+	PerlIO *	stream
+	SV *	base
+	mpq_t *	p
+	SV *	suff
+
+SV *
+TRmpq_inp_str (p, stream, base)
+	mpq_t *	p
+	PerlIO *	stream
+	SV *	base
 
 SV *
 Rmpq_inp_str (p, base)

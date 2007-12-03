@@ -34,8 +34,9 @@ Rmpq_get_den Rmpq_get_num Rmpq_get_str Rmpq_init Rmpq_init_nobless Rmpq_inp_str
 Rmpq_inv Rmpq_mul Rmpq_mul_2exp Rmpq_neg Rmpq_numref Rmpq_out_str Rmpq_printf 
 Rmpq_set Rmpq_set_d Rmpq_set_den Rmpq_set_f Rmpq_set_num Rmpq_set_si Rmpq_set_str
 Rmpq_set_ui Rmpq_set_z Rmpq_sgn Rmpq_sub Rmpq_swap
+TRmpq_out_str TRmpq_inp_str
     );
-    $Math::GMPq::VERSION = '0.11';
+    $Math::GMPq::VERSION = '0.23';
 
     DynaLoader::bootstrap Math::GMPq $Math::GMPq::VERSION;
 
@@ -46,6 +47,7 @@ Rmpq_get_den Rmpq_get_num Rmpq_get_str Rmpq_init Rmpq_init_nobless Rmpq_inp_str
 Rmpq_inv Rmpq_mul Rmpq_mul_2exp Rmpq_neg Rmpq_numref Rmpq_out_str Rmpq_printf 
 Rmpq_set Rmpq_set_d Rmpq_set_den Rmpq_set_f Rmpq_set_num Rmpq_set_si Rmpq_set_str
 Rmpq_set_ui Rmpq_set_z Rmpq_sgn Rmpq_sub Rmpq_swap
+TRmpq_out_str TRmpq_inp_str
 )]);
 
 sub dl_load_flags {0} # Prevent DynaLoader from complaining and croaking
@@ -111,7 +113,7 @@ sub new {
     if($type == 4) { # POK
       if(@_ > 1) {die "Too many arguments supplied to new() - expected no more than two"}
       $base = shift if @_;
-      if($base < 0 || $base == 1 || $base > 36) {die "Invalid value for base"}
+      if(($base < 2 && $base != 0) || $base > 62) {die "Invalid value for base"}
       Rmpq_set_str($ret, $arg1, $base);
       Rmpq_canonicalize($ret);
       return $ret;
@@ -124,10 +126,44 @@ sub new {
     }
 }
 
+#sub Rmpq_out_str {
+#    if(@_ == 2) { return _Rmpq_out_str($_[0], $_[1]) }
+#    elsif(@_ == 3) { return _Rmpq_out_str2($_[0], $_[1], $_[2]) }
+#    else {die "Wrong number of arguments supplied to Rmpq_out_str()"}
+#}
+
 sub Rmpq_out_str {
-    if(@_ == 2) { return _Rmpq_out_str($_[0], $_[1]) }
-    elsif(@_ == 3) { return _Rmpq_out_str2($_[0], $_[1], $_[2]) }
-    else {die "Wrong number of arguments supplied to Rmpq_out_str()"}
+    if(@_ == 2) {
+       die "Inappropriate 1st arg supplied to Rmpq_out_str" if _itsa($_[0]) != 7;
+       return _Rmpq_out_str($_[0], $_[1]);
+    }
+    if(@_ == 3) {
+      if(_itsa($_[0]) == 7) {return _Rmpq_out_strS($_[0], $_[1], $_[2])}
+      die "Incorrect args supplied to Rmpq_out_str" if _itsa($_[1]) != 7;
+      return _Rmpq_out_strP($_[0], $_[1], $_[2]);
+    }
+    if(@_ == 4) {
+      die "Inappropriate 2nd arg supplied to Rmpq_out_str" if _itsa($_[1]) != 7;
+      return _Rmpq_out_strPS($_[0], $_[1], $_[2], $_[3]);
+    }
+    die "Wrong number of arguments supplied to Rmpq_out_str()";
+}
+
+sub TRmpq_out_str {
+    if(@_ == 3) {
+      die "Inappropriate 3rd arg supplied to TRmpq_out_str" if _itsa($_[2]) != 7;
+      return _TRmpq_out_str($_[0], $_[1], $_[2]);
+    }
+    if(@_ == 4) {
+      if(_itsa($_[2]) == 7) {return _TRmpq_out_strS($_[0], $_[1], $_[2], $_[3])}
+      die "Incorrect args supplied to TRmpq_out_str" if _itsa($_[3]) != 7;
+      return _TRmpq_out_strP($_[0], $_[1], $_[2], $_[3]);
+    }
+    if(@_ == 5) {
+      die "Inappropriate 4th arg supplied to TRmpq_out_str" if _itsa($_[3]) != 7;
+      return _TRmpq_out_strPS($_[0], $_[1], $_[2], $_[3], $_[4]);
+    }
+    die "Wrong number of arguments supplied to TRmpq_out_str()";
 }
 
 sub _rewrite {
@@ -189,7 +225,12 @@ __END__
 
 =head1 NAME
 
-   Math::GMPq - perl interface to the GMP library's rational (mpq) functions.   
+   Math::GMPq - perl interface to the GMP library's rational (mpq) functions.
+   
+=head1 DEPENDENCIES
+
+   This module needs the GMP C library - available from:
+   http://swox.com/gmp
 
 =head1 DESCRIPTION
 
@@ -266,7 +307,7 @@ __END__
 
    These next 3 functions are demonstrated above:
    $rop   = Rmpq_init();
-   $rop   = Rmpq_set_strl($str, $base); # 1 < $base < 37
+   $rop   = Rmpq_set_strl($str, $base); # 1 < $base < 63
    $str = Rmpq_get_str($op, $base); # 1 < $base < 37 
 
    The following functions are simply wrappers around a GMP
@@ -490,21 +531,28 @@ __END__
    I/O of RATIONALS
    http://swox.com/gmp/manual/I-O-of-Rationals.html
 
-   The GMP library versions of these functions have
-   the capability to read/write directly from/to a 
-   file (as well as to stdout). As provided here,
-   the functions read/write from/to stdout only.
-
-   $bytes_written = Rmpq_out_str($op, $base [, $suffix]);
+   $bytes_written = Rmpq_out_str([$prefix,] $op, $base [, $suffix]);
+    BEST TO USE TRmpq_out_str INSTEAD. 
     Output $op to STDOUT, as a string of digits in base $base.
     The base may vary from 2 to 36. Output is in the form `num/den'
     or if the denominator is 1 then just `num'. Return the number
     of bytes written, or if an error occurred, return 0.
-    The optional third argument ($suffix) is a string (eg "\n") that
-    will be appended to the output. $bytes_written does not include
-    the bytes contained in $suffix.
+    The optional first and last arguments ($prefix and $suffix) are
+    strings that will be prepended/appended to the mpq_out_str
+    output.  $bytes_written does not include the bytes contained in
+    $prefix and $suffix.
+
+   $bytes_written = TRmpq_out_str([$prefix,] $stream, $base, $op, [, $suffix]);
+    As for Rmpq_out_str, except that there's the capability to print
+    to somewhere other than STDOUT. Note that the order of the args
+    is different (to match the order of the mpq_out_str args).
+    To print to STDERR:
+       TRmpq_out_str(*stderr, $base, $digits, $op);
+    To print to an open filehandle (let's call it FH):
+       TRmpq_out_str(\*FH, $base, $digits, $op);
 
    $bytes_read = Rmpq_inp_str($rop, $base);
+    BEST TO USE TRmpq_inp_str INSTEAD.
     Read a string of digits from STDIN and convert them to a rational
     in $rop.  Any initial white-space characters are read and
     discarded.  Return the number of characters read (including white
@@ -519,6 +567,14 @@ __END__
     characters are examined separately for the numerator and
     denominator of a fraction, so for instance `0x10/11' is 16/11,
     whereas `0x10/0x11' is 16/17. 
+
+   $bytes_read = TRmpq_inp_str($rop, $stream, $base);
+    As for Rmpq_inp_str, except that there's the capability to read
+    from somewhere other than STDIN.
+    To read from STDIN:
+       TRmpq_inp_str($rop, *stdin, $base);
+    To read from an open filehandle (let's call it FH):
+       TRmpq_inp_str($rop, \*FH, $base);
 
    ####################
 

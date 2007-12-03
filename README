@@ -1,6 +1,9 @@
 This module wraps all of the 'mpq' (rational) functions that
 version 4.2 of the Gnu MP (GMP) library provides.
 
+You therefore need the GMP library installed on your computer. See:
+http://gmplib.org/
+
 To build this module you need perl 5.6.0 or later. I'm not sure of all
 the requirements to get it to build with earlier versions of perl, but
 it's definite that the XS code relating to operator overloading will 
@@ -60,7 +63,7 @@ need to additionally link to MinGW's libgcc.a and libcoldname.a. First,
 create copies of the 3 '.a' files (named libgmp.lib, libgcc.lib, and
 libcoldname.lib) and then run:
 
-perl Makefile.pl INC="-IC:/path/to/gmp_include" LIBS="-LC:/path/to/gcc_lib -lgcc -LC:/path/to/coldname_lib -lcoldname -L/path/to/gmp_lib -lgmp"
+perl Makefile.pl INC="-IC:/path/to/gmp_include" LIBS="-LC:/path/to/gcc_lib -lgcc -LC:/path/to/coldname_lib -lcoldname -LC:/path/to/gmp_lib -lgmp"
 
 
 
