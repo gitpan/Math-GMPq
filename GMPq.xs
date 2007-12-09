@@ -248,58 +248,48 @@ SV * _Rmpq_out_strPS(SV * pre, mpq_t * p, SV * base, SV * suff) {
      return newSVuv(ret);
 }
 
-SV * _TRmpq_out_str(PerlIO * stream, SV * base, mpq_t * p) {
+
+
+SV * _TRmpq_out_str(FILE * stream, SV * base, mpq_t * p) {
      size_t ret;
-     FILE * stdio_stream = PerlIO_exportFILE(stream, NULL);
-     ret = mpq_out_str(stdio_stream, (int)SvIV(base), *p);
-     fflush(stdio_stream);
-     PerlIO_releaseFILE(stream, stdio_stream);
-     //PerlIO_flush(stream);
+     ret = mpq_out_str(stream, (int)SvIV(base), *p);
+     fflush(stream);
      return newSVuv(ret);
 }
 
-SV * _TRmpq_out_strS(PerlIO * stream, SV * base, mpq_t * p, SV * suff) {
+SV * _TRmpq_out_strS(FILE * stream, SV * base, mpq_t * p, SV * suff) {
      size_t ret;
-     FILE * stdio_stream = PerlIO_exportFILE(stream, NULL);
-     ret = mpq_out_str(stdio_stream, (int)SvIV(base), *p);
-     fflush(stdio_stream);
-     PerlIO_releaseFILE(stream, stdio_stream);
-     PerlIO_printf(stream, "%s", SvPV_nolen(suff));
-     PerlIO_flush(stream);
+     ret = mpq_out_str(stream, (int)SvIV(base), *p);
+     fflush(stream);
+     fprintf(stream, "%s", SvPV_nolen(suff));
+     fflush(stream);
      return newSVuv(ret);
 }
 
-SV * _TRmpq_out_strP(SV * pre, PerlIO * stream, SV * base, mpq_t * p) {
+SV * _TRmpq_out_strP(SV * pre, FILE * stream, SV * base, mpq_t * p) {
      size_t ret;
-     FILE * stdio_stream = PerlIO_exportFILE(stream, NULL);
-     PerlIO_printf(stream, "%s", SvPV_nolen(pre));
-     PerlIO_flush(stream);
-     ret = mpq_out_str(stdio_stream, (int)SvIV(base), *p);
-     fflush(stdio_stream);
-     PerlIO_releaseFILE(stream, stdio_stream);
+     fprintf(stream, "%s", SvPV_nolen(pre));
+     fflush(stream);
+     ret = mpq_out_str(stream, (int)SvIV(base), *p);
+     fflush(stream);
      return newSVuv(ret);
 }
 
-SV * _TRmpq_out_strPS(SV * pre, PerlIO * stream, SV * base, mpq_t * p, SV * suff) {
+SV * _TRmpq_out_strPS(SV * pre, FILE * stream, SV * base, mpq_t * p, SV * suff) {
      size_t ret;
-     FILE * stdio_stream = PerlIO_exportFILE(stream, NULL);
-     PerlIO_printf(stream, "%s", SvPV_nolen(pre));
-     PerlIO_flush(stream);
-     ret = mpq_out_str(stdio_stream, (int)SvIV(base), *p);
-     fflush(stdio_stream);
-     PerlIO_releaseFILE(stream, stdio_stream);
-     PerlIO_printf(stream, "%s", SvPV_nolen(suff));
-     PerlIO_flush(stream);
+     fprintf(stream, "%s", SvPV_nolen(pre));
+     fflush(stream);
+     ret = mpq_out_str(stream, (int)SvIV(base), *p);
+     fflush(stream);
+     fprintf(stream, "%s", SvPV_nolen(suff));
+     fflush(stream);
      return newSVuv(ret);
 }
 
-SV * TRmpq_inp_str(mpq_t * p, PerlIO * stream, SV * base) {
+SV * TRmpq_inp_str(mpq_t * p, FILE * stream, SV * base) {
      size_t ret;
-     FILE * stdio_stream = PerlIO_exportFILE(stream, NULL);
-     ret = mpq_inp_str(*p, stdio_stream, (int)SvIV(base));
-     fflush(stdio_stream);
-     PerlIO_releaseFILE(stream, stdio_stream);
-     //PerlIO_flush(stream);
+     ret = mpq_inp_str(*p, stream, (int)SvIV(base));
+     fflush(stream);
      return newSVuv(ret);
 }
 
@@ -1371,34 +1361,52 @@ void wrap_gmp_printf(SV * a, SV * b) {
      if(sv_isobject(b)) { 
        if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPz") ||
           strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMP") ||
-          strEQ(HvNAME(SvSTASH(SvRV(b))), "GMP::Mpz"))
+          strEQ(HvNAME(SvSTASH(SvRV(b))), "GMP::Mpz")) {
           gmp_printf(SvPV_nolen(a), *(INT2PTR(mpz_t *, SvIV(SvRV(b)))));
+          fflush(stdout);
+        }
        else {
          if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPq") ||
-            strEQ(HvNAME(SvSTASH(SvRV(b))), "GMP::Mpq"))
+            strEQ(HvNAME(SvSTASH(SvRV(b))), "GMP::Mpq")) {
             gmp_printf(SvPV_nolen(a), *(INT2PTR(mpq_t *, SvIV(SvRV(b)))));
+            fflush(stdout);
+         }
          else {
            if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPf") ||
-              strEQ(HvNAME(SvSTASH(SvRV(b))), "GMP::Mpf"))
+              strEQ(HvNAME(SvSTASH(SvRV(b))), "GMP::Mpf")) {
               gmp_printf(SvPV_nolen(a), *(INT2PTR(mpf_t *, SvIV(SvRV(b)))));
-              else croak("Unrecognised object supplied as argument to Rmpq_printf");
+              fflush(stdout);
            }
-         }
-       } 
-
-     else {
-       if(SvUOK(b)) gmp_printf(SvPV_nolen(a), SvUV(b));
-       else {
-         if(SvIOK(b)) gmp_printf(SvPV_nolen(a), SvIV(b)); 
-         else {
-           if(SvNOK(b)) gmp_printf(SvPV_nolen(a), SvNV(b)); 
-           else {
-             if(SvPOK(b)) gmp_printf(SvPV_nolen(a), SvPV_nolen(b));
-             else croak("Unrecognised type supplied as argument to Rmpq_printf");
-             }
-           } 
+              else croak("Unrecognised object supplied as argument to Rmpq_printf");
          }
        }
+     } 
+
+     else {
+       if(SvUOK(b)) {
+         gmp_printf(SvPV_nolen(a), SvUV(b));
+         fflush(stdout);
+       }
+       else {
+         if(SvIOK(b)) {
+           gmp_printf(SvPV_nolen(a), SvIV(b)); 
+           fflush(stdout);
+         }
+         else {
+           if(SvNOK(b)) {
+             gmp_printf(SvPV_nolen(a), SvNV(b));
+             fflush(stdout);
+           }
+           else {
+             if(SvPOK(b)) {
+               gmp_printf(SvPV_nolen(a), SvPV_nolen(b));
+               fflush(stdout);
+             }
+             else croak("Unrecognised type supplied as argument to Rmpq_printf");
+           }
+         } 
+       }
+     }
 }
 
 SV * _itsa(SV * a) {
@@ -1908,13 +1916,13 @@ _Rmpq_out_strPS (pre, p, base, suff)
 
 SV *
 _TRmpq_out_str (stream, base, p)
-	PerlIO *	stream
+	FILE *	stream
 	SV *	base
 	mpq_t *	p
 
 SV *
 _TRmpq_out_strS (stream, base, p, suff)
-	PerlIO *	stream
+	FILE *	stream
 	SV *	base
 	mpq_t *	p
 	SV *	suff
@@ -1922,14 +1930,14 @@ _TRmpq_out_strS (stream, base, p, suff)
 SV *
 _TRmpq_out_strP (pre, stream, base, p)
 	SV *	pre
-	PerlIO *	stream
+	FILE *	stream
 	SV *	base
 	mpq_t *	p
 
 SV *
 _TRmpq_out_strPS (pre, stream, base, p, suff)
 	SV *	pre
-	PerlIO *	stream
+	FILE *	stream
 	SV *	base
 	mpq_t *	p
 	SV *	suff
@@ -1937,7 +1945,7 @@ _TRmpq_out_strPS (pre, stream, base, p, suff)
 SV *
 TRmpq_inp_str (p, stream, base)
 	mpq_t *	p
-	PerlIO *	stream
+	FILE *	stream
 	SV *	base
 
 SV *

@@ -36,7 +36,7 @@ Rmpq_set Rmpq_set_d Rmpq_set_den Rmpq_set_f Rmpq_set_num Rmpq_set_si Rmpq_set_st
 Rmpq_set_ui Rmpq_set_z Rmpq_sgn Rmpq_sub Rmpq_swap
 TRmpq_out_str TRmpq_inp_str
     );
-    $Math::GMPq::VERSION = '0.23';
+    $Math::GMPq::VERSION = '0.24';
 
     DynaLoader::bootstrap Math::GMPq $Math::GMPq::VERSION;
 
