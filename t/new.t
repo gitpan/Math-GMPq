@@ -8,6 +8,11 @@ print "1..4\n";
 
 print "# Using gmp version ", Math::GMPq::gmp_v(), "\n";
 
+my @version = split /\./, Math::GMPq::gmp_v();
+my $old = 0;
+if($version[0] == 4 && $version[1] < 2) {$old = 1}
+if($old) {warn "Tests 1, 2 & 3 should fail - GMP version ", Math::GMPf::gmp_v(), " is old and doesn't support base 62\n";}
+
 my $ui = 123569;
 my $si = -19907;
 my $d = -1.625;

@@ -2,7 +2,8 @@ eval "use Test::Pod 1.00";
 
 if($@) {
   print "1..1\n";
-  print "ok 1 - skipped, no sufficiently recent version of Test::Pod installed \n";
+  warn "Skipping test 1 - no recent version of Test::Pod installed\n";
+  print "ok 1\n";
 }
 
 else {

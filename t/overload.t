@@ -582,4 +582,7 @@ if($] >= 5.008) {
   if(int($p) == 3) {print "ok 35\n"}
   else {print "not ok 35\n"}
 }
-else {print "ok 35 - skipped - no overloading of 'int()' on perl $] \n"}
+else {
+  warn "Skipping test 35 - no overloading of 'int' on perl $]\n";
+  print "ok 35\n";
+}

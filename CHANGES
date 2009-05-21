@@ -1,3 +1,11 @@
+0.27
+ - Add Rmpq_fprintf, Rmpq_sprintf and Rmpq_sprintf_ret.
+ - Change Rmpq_sprintf to return the number of characters written.
+ - Add __GNU_MP_VERSION, __GNU_MP_VERSION_MINOR, __GNU_MP_VERSION_PATCHLEVEL,
+   __GMP_CC and __GMP_CFLAGS
+ - Change Rmpq_printf() so that, like its fprintf and sprintf counterparts,
+   it formats only one variable at a time.
+
 0.24
  - Replace the PerlIO* objects stuff in _TRmpfr_* functions (added in
    0.23) with FILE* objects  ... so that the module will still build

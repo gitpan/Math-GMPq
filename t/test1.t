@@ -45,7 +45,8 @@ if($have_mpz) {
   }
 else {
   Rmpq_set_str($p, '123456789', 10);
-  print "ok 4 - skipped - no Math::GMPz\n";
+  warn "Skipping test 4 - no Math::GMPz\n";
+  print "ok 4\n";
   }
 
 Rmpq_swap($p, $q);
@@ -56,8 +57,11 @@ if($have_mpf) {
   Rmpq_set_f($p, $f);
   if(Rmpq_get_str($p, 10) eq '2469/2') {print "ok 6\n"}
   else {print "not ok 6\n"}
-  }
-else {print "ok 6 - skipped - no Math::GMPf\n"}
+}
+else {
+  warn "Skipping test 6 - no Math::GMPf\n";
+  print "ok 6\n";
+}
 
 Rmpq_set_str($s, '999999999999999999999ff1/2', 36);
 
@@ -116,8 +120,11 @@ if($have_mpz) {
   if(Rmpq_get_str($p, 10) eq '12345671/5') {$ok .= 'c'}
   if($ok eq 'abc') {print "ok 16\n"}
   else {print "not ok 16 $ok\n"}
-  }
-else {print "ok 16 - skipped - no Math::GMPz\n"}
+}
+else {
+  warn "Skipping test 16 - no Math::GMPz\n";
+  print "ok 16\n";
+}
 
 Rmpq_set_str($q, '4295098369/4295360521', 10);
 
@@ -129,9 +136,11 @@ if($have_mpz) {
   if(Math::GMPz::Rmpz_get_str($z, 10) eq '4295360521') {$ok .= 'b'}
   if($ok eq 'ab') {print "ok 17\n"}
   else {print "not ok 17 $ok\n"}
-  }
-
-else {print "ok 17 - skipped - no Math::GMPz\n"}
+}
+else {
+  warn "Skipping test 17 - no Math::GMPz\n";
+  print "ok 17\n";
+}
 
 my $x = Rmpq_init();
 my $y = Rmpq_init();
@@ -152,8 +161,8 @@ eval {$ok = Math::GMPq::gmp_v();};
 if($@ || $ok =~ /[^0-9\.]/) {print "not ok 19\n"}
 else {print "ok 19\n"}
 
-my $ofh = select(STDERR);
+#my $ofh = select(STDERR);
 eval {Rmpq_printf("The version is %s. Values are %d %Qx %Qx\n", $ok, 11, $x, $y);};
-select($ofh);
-if($@) {print "not ok 20\n"}
+#select($ofh);
+if(!$@) {print "not ok 20\n"}
 else {print "ok 20\n"}

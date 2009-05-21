@@ -4,6 +4,8 @@ require 5.006;
 
 $| = 1;
 
+print "This module requires gmp-4.2.0 (or later)\n";
+
 $use_64_bit_int = 0; # Let perl decide whether to include 64-bit 'long long' support
 $use_long_double = 0;# Let perl decide whether to include 'long double' support
 

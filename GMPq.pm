@@ -4,6 +4,20 @@
     *import = \&Exporter::import;
     require DynaLoader;
 
+    use constant _UOK_T         => 1;
+    use constant _IOK_T         => 2;
+    use constant _NOK_T         => 3;
+    use constant _POK_T         => 4;
+    use constant _MATH_MPFR_T   => 5;
+    use constant _MATH_GMPf_T   => 6;
+    use constant _MATH_GMPq_T   => 7;
+    use constant _MATH_GMPz_T   => 8;
+    use constant _MATH_GMP_T    => 9;
+    use constant _MATH_MPC_T    => 10;
+
+use subs qw( __GNU_MP_VERSION __GNU_MP_VERSION_MINOR __GNU_MP_VERSION_PATCHLEVEL
+             __GMP_CC __GMP_CFLAGS);
+
 use overload
     '+'    => \&overload_add,
     '-'    => \&overload_sub,
@@ -28,25 +42,34 @@ use overload
     'abs'  => \&overload_abs;
 
     @Math::GMPq::EXPORT_OK = qw(
+__GNU_MP_VERSION __GNU_MP_VERSION_MINOR __GNU_MP_VERSION_PATCHLEVEL
 Rmpq_abs Rmpq_add Rmpq_canonicalize Rmpq_clear Rmpq_cmp Rmpq_cmp_si Rmpq_cmp_ui
-Rmpq_create_noval Rmpq_denref Rmpq_div Rmpq_div_2exp Rmpq_equal Rmpq_get_d 
+Rmpq_create_noval Rmpq_denref Rmpq_div Rmpq_div_2exp Rmpq_equal 
+Rmpq_fprintf
+Rmpq_get_d 
 Rmpq_get_den Rmpq_get_num Rmpq_get_str Rmpq_init Rmpq_init_nobless Rmpq_inp_str
 Rmpq_inv Rmpq_mul Rmpq_mul_2exp Rmpq_neg Rmpq_numref Rmpq_out_str Rmpq_printf 
 Rmpq_set Rmpq_set_d Rmpq_set_den Rmpq_set_f Rmpq_set_num Rmpq_set_si Rmpq_set_str
-Rmpq_set_ui Rmpq_set_z Rmpq_sgn Rmpq_sub Rmpq_swap
+Rmpq_set_ui Rmpq_set_z Rmpq_sgn 
+Rmpq_sprintf Rmpq_sprintf_ret
+Rmpq_sub Rmpq_swap
 TRmpq_out_str TRmpq_inp_str
     );
-    $Math::GMPq::VERSION = '0.24';
+    $Math::GMPq::VERSION = '0.27';
 
     DynaLoader::bootstrap Math::GMPq $Math::GMPq::VERSION;
 
     %Math::GMPq::EXPORT_TAGS =(mpq => [qw(
 Rmpq_abs Rmpq_add Rmpq_canonicalize Rmpq_clear Rmpq_cmp Rmpq_cmp_si Rmpq_cmp_ui
-Rmpq_create_noval Rmpq_denref Rmpq_div Rmpq_div_2exp Rmpq_equal Rmpq_get_d 
+Rmpq_create_noval Rmpq_denref Rmpq_div Rmpq_div_2exp Rmpq_equal 
+Rmpq_fprintf
+Rmpq_get_d 
 Rmpq_get_den Rmpq_get_num Rmpq_get_str Rmpq_init Rmpq_init_nobless Rmpq_inp_str
 Rmpq_inv Rmpq_mul Rmpq_mul_2exp Rmpq_neg Rmpq_numref Rmpq_out_str Rmpq_printf 
 Rmpq_set Rmpq_set_d Rmpq_set_den Rmpq_set_f Rmpq_set_num Rmpq_set_si Rmpq_set_str
-Rmpq_set_ui Rmpq_set_z Rmpq_sgn Rmpq_sub Rmpq_swap
+Rmpq_set_ui Rmpq_set_z Rmpq_sgn 
+Rmpq_sprintf Rmpq_sprintf_ret
+Rmpq_sub Rmpq_swap
 TRmpq_out_str TRmpq_inp_str
 )]);
 
@@ -93,14 +116,14 @@ sub new {
     my $ret = Rmpq_init();
 
     # Create a Math::GMPq object that has $arg1 as its value.
-    # Die if there are any additional args (unless $type == 4)
-    if($type == 1 || $type == 2) { # UOK or IOK
+    # Die if there are any additional args (unless $type == _POK_T)
+    if($type == _UOK_T || $type == _IOK_T) {
       if(@_ ) {die "Too many arguments supplied to new() - expected only one"}
       Rmpq_set_str($ret, $arg1, 10);
       return $ret;
     }
 
-    if($type == 3) { # NOK
+    if($type == _NOK_T) {
       if(@_ ) {die "Too many arguments supplied to new() - expected only one"}
       if(Math::GMPq::_has_longdouble()) {
         _Rmpq_set_ld($ret, $arg1);
@@ -110,7 +133,7 @@ sub new {
       return $ret;
     }
     
-    if($type == 4) { # POK
+    if($type == _POK_T) {
       if(@_ > 1) {die "Too many arguments supplied to new() - expected no more than two"}
       $base = shift if @_;
       if(($base < 2 && $base != 0) || $base > 62) {die "Invalid value for base"}
@@ -119,31 +142,25 @@ sub new {
       return $ret;
     }
 
-    if($type == 7) { # Math::GMPq object
+    if($type == _MATH_GMPq_T) { # Math::GMPq object
       if(@_) {die "Too many arguments supplied to new() - expected only one"}
       Rmpq_set($ret, $arg1);
       return $ret;
     }
 }
 
-#sub Rmpq_out_str {
-#    if(@_ == 2) { return _Rmpq_out_str($_[0], $_[1]) }
-#    elsif(@_ == 3) { return _Rmpq_out_str2($_[0], $_[1], $_[2]) }
-#    else {die "Wrong number of arguments supplied to Rmpq_out_str()"}
-#}
-
 sub Rmpq_out_str {
     if(@_ == 2) {
-       die "Inappropriate 1st arg supplied to Rmpq_out_str" if _itsa($_[0]) != 7;
+       die "Inappropriate 1st arg supplied to Rmpq_out_str" if _itsa($_[0]) != _MATH_GMPq_T;
        return _Rmpq_out_str($_[0], $_[1]);
     }
     if(@_ == 3) {
-      if(_itsa($_[0]) == 7) {return _Rmpq_out_strS($_[0], $_[1], $_[2])}
-      die "Incorrect args supplied to Rmpq_out_str" if _itsa($_[1]) != 7;
+      if(_itsa($_[0]) == _MATH_GMPq_T) {return _Rmpq_out_strS($_[0], $_[1], $_[2])}
+      die "Incorrect args supplied to Rmpq_out_str" if _itsa($_[1]) != _MATH_GMPq_T;
       return _Rmpq_out_strP($_[0], $_[1], $_[2]);
     }
     if(@_ == 4) {
-      die "Inappropriate 2nd arg supplied to Rmpq_out_str" if _itsa($_[1]) != 7;
+      die "Inappropriate 2nd arg supplied to Rmpq_out_str" if _itsa($_[1]) != _MATH_GMPq_T;
       return _Rmpq_out_strPS($_[0], $_[1], $_[2], $_[3]);
     }
     die "Wrong number of arguments supplied to Rmpq_out_str()";
@@ -151,16 +168,16 @@ sub Rmpq_out_str {
 
 sub TRmpq_out_str {
     if(@_ == 3) {
-      die "Inappropriate 3rd arg supplied to TRmpq_out_str" if _itsa($_[2]) != 7;
+      die "Inappropriate 3rd arg supplied to TRmpq_out_str" if _itsa($_[2]) != _MATH_GMPq_T;
       return _TRmpq_out_str($_[0], $_[1], $_[2]);
     }
     if(@_ == 4) {
-      if(_itsa($_[2]) == 7) {return _TRmpq_out_strS($_[0], $_[1], $_[2], $_[3])}
-      die "Incorrect args supplied to TRmpq_out_str" if _itsa($_[3]) != 7;
+      if(_itsa($_[2]) == _MATH_GMPq_T) {return _TRmpq_out_strS($_[0], $_[1], $_[2], $_[3])}
+      die "Incorrect args supplied to TRmpq_out_str" if _itsa($_[3]) != _MATH_GMPq_T;
       return _TRmpq_out_strP($_[0], $_[1], $_[2], $_[3]);
     }
     if(@_ == 5) {
-      die "Inappropriate 4th arg supplied to TRmpq_out_str" if _itsa($_[3]) != 7;
+      die "Inappropriate 4th arg supplied to TRmpq_out_str" if _itsa($_[3]) != _MATH_GMPq_T;
       return _TRmpq_out_strPS($_[0], $_[1], $_[2], $_[3], $_[4]);
     }
     die "Wrong number of arguments supplied to TRmpq_out_str()";
@@ -191,33 +208,34 @@ sub _rewrite {
 }
 
 sub Rmpq_printf {
-    local $| = 1; # Make sure the output gets presented in the correct sequence.
-    if(@_ == 1) {printf(shift)}
-
-    else {
-      my @fmt = _rewrite(shift);
-      my @args = @_;
-
-     # It's expected that @fmt and @args are of equal size (though in the case
-     # of both perl's and C's printf function that's not always the case).
-     # Each member of @fmt is paired with one and only one member of @args, each
-     # pair of arguments being passed on to either perl's printf function or
-     # the gmp_printf function. Any excess (leftover) arguments are simply ignored.
-      if(@fmt != @args) {warn "Mismatch in number of args provided to Rmpq_printf.",
-                         " Perhaps the function has not parsed the format string as expected"};
-      my $len = @fmt;
-
-
-     # If $fmt[$i] contains a 'Z' or a 'Q' or an 'F', hand over $fmt[$i] and
-     # $args[$i] to the gmp_printf function.
-     # Else let perl's printf function take care of the formatting - though
-     # the gmp_printf function is also probably capable of handling the task.
-      for(my $i = 0; $i < $len; $i++) { 
-         if($fmt[$i] =~ /Z|Q|F/) {wrap_gmp_printf($fmt[$i], $args[$i])}
-         else {printf($fmt[$i], $args[$i])}
-         }
-      }
+    local $| = 1;
+    die "Rmpz_printf must take 2 arguments: format string, and variable" if @_ != 2;
+    wrap_gmp_printf(@_);
 }
+
+sub Rmpq_fprintf {
+    die "Rmpq_fprintf must take 3 arguments: filehandle, format string, and variable" if @_ != 3;
+    wrap_gmp_fprintf(@_);
+}
+
+sub Rmpq_sprintf {
+    die "Rmpq_sprintf must take 3 arguments: buffer, format string, and variable" if @_ != 3;
+    my $len = wrap_gmp_sprintf(@_);
+    $_[0] = substr($_[0], 0, $len);
+    return $len;
+}
+
+sub Rmpq_sprintf_ret {
+    die "Rmpq_sprintf must take 3 arguments: buffer, format string, and variable" if @_ != 3;
+    my $len = wrap_gmp_sprintf(@_);
+    return substr($_[0], 0, $len);
+}
+
+sub __GNU_MP_VERSION {return ___GNU_MP_VERSION()}
+sub __GNU_MP_VERSION_MINOR {return ___GNU_MP_VERSION_MINOR()}
+sub __GNU_MP_VERSION_PATCHLEVEL {return ___GNU_MP_VERSION_PATCHLEVEL()}
+sub __GMP_CC {return ___GMP_CC()}
+sub __GMP_CFLAGS {return ___GMP_CFLAGS()}
 
 1;
 
@@ -230,7 +248,7 @@ __END__
 =head1 DEPENDENCIES
 
    This module needs the GMP C library - available from:
-   http://swox.com/gmp
+   http://gmplib.org.
 
 =head1 DESCRIPTION
 
@@ -238,7 +256,7 @@ __END__
    Basically this module simply wraps all of the 'mpq'
    (rational number) functions provided by that library.
    The documentation below extensively plagiarises the GMP
-   documentation (which can be found at http://swox.com/gmp/manual/).
+   documentation (which can be found at http://gmplib.org).
    See also the Math::GMPq test suite for examples of usage.
 
    IMPORTANT:
@@ -303,7 +321,7 @@ __END__
 
 =head1 FUNCTIONS
 
-   See the GMP documentation at http://swox.com/gmp/manual
+   See the GMP documentation at http://gmplib.org.
 
    These next 3 functions are demonstrated above:
    $rop   = Rmpq_init();
@@ -313,7 +331,7 @@ __END__
    The following functions are simply wrappers around a GMP
    function of the same name. eg. Rmpq_swap() is a wrapper around
    mpq_swap() which is fully documented in the GMP manual at
-   http://swox.com/gmp/manual.
+   http://gmplib.org.
 
    "$rop", "$op1", "$op2", etc. are simply  Math::GMPq objects -
    the return value of Rmpq_init or Rmpq_init_nobless
@@ -357,7 +375,6 @@ __END__
    ############
 
    CANONICALIZE
-   http://swox.com/gmp/manual/Rational-Number-Functions
 
    Rmpq_canonicalize($op);
     Remove any factors that are common to the numerator and
@@ -384,7 +401,6 @@ __END__
    ####################
 
    ASSIGNMENT FUNCTIONS
-   http://swox.com/gmp/manual/Initializing-Rationals
 
    Rmpq_set($rop, $op);
    Rmpq_set_z($rop, $z); # $z is a Math::GMPz object
@@ -421,8 +437,8 @@ __END__
    $rop = Math::GMPq->new($arg);
    $rop = Math::GMPq::new($arg);
    $rop = new Math::GMPq($arg);
-    Returns a Math::GMPq object with the value of $arg, with default
-    precision. $arg can be either an integer (signed integer, unsigned
+    Returns a Math::GMPq object with the value of $arg.
+    $arg can be either an integer (signed integer, unsigned
     integer) or a string that represents a numeric value. If $arg is a
     string, an optional additional argument that specifies the base of
     the number can be supplied to new(). If base is 0 (or not supplied)
@@ -434,7 +450,6 @@ __END__
    ####################
 
    RATIONAL CONVERSIONS
-   http://swox.com/gmp/manual/Rational-Conversions.html
 
    $double = Rmpq_get_d($op);
     Convert $op to a 'double'.
@@ -451,7 +466,6 @@ __END__
    ###################
 
    RATIONAL ARITHMETIC
-   http://swox.com/gmp/manual/Rational-Arithmetic.html
 
    Rmpq_add($rop, $op1, $op2);
     $rop = $op1 + $op2.
@@ -470,7 +484,7 @@ __END__
 
    Rmpq_div_2exp($rop, $op, $ui);
     $rop = $op / (2 ** $ui).
-    
+
    Rmpq_neg($rop, $op);
     $rop = -$op.
 
@@ -483,12 +497,11 @@ __END__
    ##########################
 
    APPLYING INTEGER FUNCTIONS
-   http://swox.com/gmp/manual/Applying-Integer-Functions.html
 
    Rmpq_numref($z, $op); # $z is a Math::GMPz object
    Rmpq_denref($z, $op); # $z is a Math::GMPz object
     Set $rop to the numerator and denominator of $op, respectively.
-    
+
    Rmpq_get_num($z, $op); # $z is a Math::GMPz oblect
    Rmpq_get_den($z, $op); # $z is a Math::GMPz oblect
    Rmpq_set_num($rop, $z); # $z is a Math::GMPz oblect
@@ -500,7 +513,6 @@ __END__
    ###################
 
    COMPARING RATIONALS
-   http://swox.com/gmp/manual/Comparing-Rationals.html
 
    $si = Rmpq_cmp($op1, $op2);
     Compare $op1 and $op2.  Return a positive value if $op1 > $op2,
@@ -529,7 +541,6 @@ __END__
    ################
 
    I/O of RATIONALS
-   http://swox.com/gmp/manual/I-O-of-Rationals.html
 
    $bytes_written = Rmpq_out_str([$prefix,] $op, $base [, $suffix]);
     BEST TO USE TRmpq_out_str INSTEAD. 
@@ -640,121 +651,92 @@ __END__
 
    OTHER
 
-   $GMP_Version = Math::GMPq::gmp_v();
-    Returns the version of the GMP library. The function is not
-    exported.
+   $GMP_version = Math::GMPq::gmp_v;
+    Returns the version of the GMP library (eg 4.1.3). The function
+    is not exportable.
+
+   $GMP_cc = Math::GMPq::__GMP_CC;
+   $GMP_cflags = Math::GMPq::__GMP_CFLAGS;
+    Returns respectively the CC and CFLAGS settings that were used
+    to compile the gmp library. (Not exportable.) 
+
+   $major = Math::GMPq::__GNU_MP_VERSION;
+   $minor = Math::GMPq::__GNU_MP_VERSION_MINOR;
+   $patchlevel = Math::GMPq::__GNU_MP_VERSION_PATCHLEVEL;
+    Returns respectively the major, minor, and patchlevel numbers
+    for the GMP library version used by Math::GMPq. (These 
+    functions are in @EXPORT_OK and are therefore exportable by
+    request.) 
 
    ################
 
    FORMATTED OUTPUT
 
-   Rmpq_printf($format_string, @variables);
+   NOTE: The format specification can be found at:
+   http://gmplib.org/manual/Formatted-Output-Strings.html#Formatted-Output-Strings
+   However, the use of '*' to take an extra variable for width and
+   precision is not allowed in this implementation. Instead, it is
+   necessary to interpolate the variable into the format string - ie,
+   instead of:
+     Rmpq_printf("%*Zd\n", $width, $mpz);
+   we need:
+     Rmpq_printf("%${width}Zd\n", $mpz);
 
-    'Rmpq_printf' accepts format strings similar to the standard C
-    'printf' (and hence also perl's printf function). A format
-     specification is of the form:
+   $si = Rmpq_printf($format_string, $var);
 
-      % [flags] [width] [.[precision]] [type] conv
+    This function changed with the release of Math-GMPq-0.27.
+    Now (unlike the GMP counterpart), it is limited to taking 2
+    arguments - the format string, and the variable to be formatted.
+    That is, you can format only one variable at a time. 
+    Returns the number of characters written, or -1 if an error
+    occurred.
 
-    GMP adds types 'Z', 'Q' and 'F' for Math::GMPz objects,
-    Math::GMPq objects and Math::GMPf objects respectively.
-    'Z', and 'Q' behave like integers.  'Q' will print a '/' and a
-    denominator, if needed.  'F' behaves like a float.  For example:
+   $si = Rmpq_fprintf($fh, $format_string, $var);
 
-     Rmpq_printf ("%s is a Math::GMPz object %Zd\n", "here", $z);
-     Rmpq_printf ("a hex rational: %#40Qx\n", $q);
-     Rmpq_printf ("fixed point mpf %.5Ff with 5 decimal places\n", $f);
+    This function (unlike the GMP counterpart) is limited to taking
+    3 arguments - the filehandle, the format string, and the variable
+    to be formatted. That is, you can format only one variable at a time.
+    Other than that, the rules outlined above wrt Rmpq_printf apply.
+    Returns the number of characters written, or -1 if an error
+    occurred.
 
-    The flags accepted are as follows:
+   $si = Rmpq_sprintf($buffer, $format_string, $var);
 
-     0         pad with zeros (rather than spaces)
-     #         show the base with '0x', '0X' or '0'
-     +         always show a sign
-     (space)   show a space or a '-' sign
+    This function (unlike the GMP counterpart) is limited to taking
+    3 arguments - the buffer, the format string, and the variable
+    to be formatted. $buffer must be large enough to accommodate the
+    formatted string, and is truncated to the length of that formatted
+    string. If you prefer to have the resultant string returned (rather
+    than stored in $buffer), use Rmpq_sprintf_ret instead - which will
+    also leave the length of $buffer unaltered.
+    Returns the number of characters written, or -1 if an error
+    occurred.
 
-    The optional width and precision can be given as a number within
-    the format string, or as an interpolated perl variable - but note
-    that formatting with '*' (for width and precision fields)
-    WON'T currently work.ie the following is not currently supported:
+   $string = Rmpq_sprintf_ret($buffer, $format_string, $var);
 
-     $places = 5;
-     Rmpq_printf("mpf %.*Ff\n", $places, $f);
-
-    Instead you would need to rewrite this as:
-
-     $places = 5;
-     Rmpq_printf("mpf %.${places}Ff\n", $f);
-
-    The conversions accepted are as follows.  
-
-     a A       hex floats, C99 style
-     c         character
-     d         decimal integer
-     e E       scientific format float
-     f         fixed point float
-     i         same as d
-     g G       fixed or scientific float
-     o         octal integer
-     s         string
-     u         unsigned integer
-     x X       hex integer
-
-    'a' and 'A' are always supported for GMP objects but don't work with
-    perl's printf function. Always call them prefixed with either 'Z',
-    'F' or 'Q' (whichever is appropriate).
-
-    'p' works with the GMP library and with perl (returns the address of
-    the variable), but can segfault if it's used in the Rmpq_printf 
-    function. For this reason I've excluded it from the list above,
-    though you can certainly use it with perl's printf function - even
-    if the perl variable is a gmp object.
-
-    'o', 'x' and 'X' are unsigned for the standard C types, but for
-    types 'Z', 'Q' and 'N' they are signed.  'u' is not meaningful
-    for 'Z', 'Q' and 'N'.
-
-    In the GMP C library, 'n' can be used with any type, even the GMP
-    types - but that functionality does not currently extend to Perl's
-    GMP objects - so 'n' has been excluded from the above list.
-
-    The precision field has it's usual meaning for integer 'Z' and float
-    'F' types, but is currently undefined for 'Q' and should not be used
-    with that.
-
-    Conversions of Math::GMPf objects only ever generate as many 
-    digits as can be accurately represented by the operand, the same as
-    'Rmpf_get_str' does. Zeros will be used if necessary to pad to the 
-    requested precision.  This happens even for an 'f' conversion of a 
-    Math::GMPf object which is an integer, for instance 2^1024 in a 
-    Math::GMPq object of 128 bits precision will only produce about
-    40 digits, then pad with zeros to the decimal point.  An empty 
-    precision field like '%.Fe' or '%.Ff' can be used to specifically
-    request just the significant digits.
-
-    The format string is interpreted as plain ASCII - multibyte
-    characters are not recognised.
-
-    Also, in Rmpq_printf, there's no support for POSIX '$' style 
-    numbered arguments.
+    As for Rmpq_sprintf, but returns the formatted string, rather than
+    storing it in $buffer. $buffer needs to be large enough to 
+    accommodate the formatted string. The length of $buffer will be
+    unaltered.
 
    ################
 
 =head1 BUGS
 
-   You can get segfaults if you pass the wrong type of
-   argument to the functions - so if you get a segfault, the
-   first thing to do is to check that the argument types 
-   you have supplied are appropriate.
+    You can get segfaults if you pass the wrong type of
+    argument to the functions - so if you get a segfault, the
+    first thing to do is to check that the argument types 
+    you have supplied are appropriate.
 
-=head1 TERMS AND CONDITIONS
+=head1 LICENSE
 
-   Use this module for whatever you like. It's free and comes
-   with no guarantees - except that the purchase price is
-   fully refundable if you're dissatisfied with it.
+    This program is free software; you may redistribute it and/or 
+    modify it under the same terms as Perl itself.
+    Copyright 2006-2008, Sisyphus
 
 =head1 AUTHOR
 
-  Copyright Sisyhpus <sisyphus at(@) cpan dot (.) org>
+    Sisyphus <sisyphus at(@) cpan dot (.) org>
 
 
 =cut

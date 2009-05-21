@@ -26,4 +26,6 @@ if(Math::GMPq::_has_longdouble()) {
   else {print "not ok 2 $ok\n"}
 }
 
-else {print "ok 2 - skipped\n"}
+else {
+  warn "Skipping test 2 - no long double support\n"; 
+  print "ok 2\n"}
