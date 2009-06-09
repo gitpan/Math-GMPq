@@ -1558,13 +1558,21 @@ SV * ___GNU_MP_VERSION_PATCHLEVEL() {
 }
 
 SV * ___GMP_CC() {
+#ifdef __GMP_CC
      char * ret = __GMP_CC;
      return newSVpv(ret, 0);
+#else
+     return &PL_sv_undef;
+#endif
 }
 
 SV * ___GMP_CFLAGS() {
+#ifdef __GMP_CFLAGS
      char * ret = __GMP_CFLAGS;
      return newSVpv(ret, 0);
+#else
+     return &PL_sv_undef;
+#endif
 }
 
 

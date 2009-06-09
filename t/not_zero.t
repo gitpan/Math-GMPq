@@ -26,7 +26,7 @@ if($gmpq1 == $n &&
    $gmpq2 == $n ) {print "ok 2\n"}
 else {print "not ok 2\n"}
 
-if(defined($Config::Config{use64bitint}) &&
+if(Math::GMPq::_has_longlong() &&
    $Config::Config{longsize} == 4) {
    if($gmpq3 != $n) {print "ok 3\n"}
    else {print "not ok 3 A $gmpq3 == $n\n"}

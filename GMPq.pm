@@ -55,7 +55,7 @@ Rmpq_sprintf Rmpq_sprintf_ret
 Rmpq_sub Rmpq_swap
 TRmpq_out_str TRmpq_inp_str
     );
-    $Math::GMPq::VERSION = '0.27';
+    $Math::GMPq::VERSION = '0.28';
 
     DynaLoader::bootstrap Math::GMPq $Math::GMPq::VERSION;
 
@@ -657,8 +657,12 @@ __END__
 
    $GMP_cc = Math::GMPq::__GMP_CC;
    $GMP_cflags = Math::GMPq::__GMP_CFLAGS;
-    Returns respectively the CC and CFLAGS settings that were used
-    to compile the gmp library. (Not exportable.) 
+    These functions are not exportable.
+    If Math::GMPq has been built against gmp-4.2.3 or later,
+    returns respectively the CC and CFLAGS settings that were used
+    to compile the gmp library.
+    Returns undef if Math::GMPq has been built against an earlier
+    version of the gmp library. 
 
    $major = Math::GMPq::__GNU_MP_VERSION;
    $minor = Math::GMPq::__GNU_MP_VERSION_MINOR;

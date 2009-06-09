@@ -2,14 +2,14 @@ use warnings;
 use strict;
 use Math::GMPq qw(__GNU_MP_VERSION __GNU_MP_VERSION_MINOR __GNU_MP_VERSION_PATCHLEVEL);
 
-print "1..7\n";
+print "1..9\n";
 
 warn "\n# Using Math::GMPq version ", $Math::GMPq::VERSION, "\n";
 warn "# Using gmp library version ", Math::GMPq::gmp_v(), "\n";
-warn "# CC is ", Math::GMPq::__GMP_CC, "\n";
-warn "# CFLAGS are ", Math::GMPq::__GMP_CFLAGS, "\n";
+warn "# CC is ", Math::GMPq::__GMP_CC, "\n" if defined Math::GMPq::__GMP_CC;
+warn "# CFLAGS are ", Math::GMPq::__GMP_CFLAGS, "\n" if defined Math::GMPq::__GMP_CFLAGS;
 
-if($Math::GMPq::VERSION eq '0.27') {print "ok 1\n"}
+if($Math::GMPq::VERSION eq '0.28') {print "ok 1\n"}
 else {print "not ok 1 $Math::GMPq::VERSION\n"}
 
 my @version = split /\./, Math::GMPq::gmp_v();
@@ -38,4 +38,16 @@ unless($@) {print "ok 7\n"}
 else {
   warn "$@\n";
   print "not ok 7\n"
+}
+
+my $version_num = version_num(__GNU_MP_VERSION, __GNU_MP_VERSION_MINOR, __GNU_MP_VERSION_PATCHLEVEL);
+
+print $version_num < 262659 ? !defined(Math::GMPq::__GMP_CC) ? "ok 8\n" : "not ok 8\n"
+                            :  defined(Math::GMPq::__GMP_CC) ? "ok 8\n" : "not ok 8\n";
+
+print $version_num < 262659 ? !defined(Math::GMPq::__GMP_CFLAGS) ? "ok 9\n" : "not ok 9\n"
+                            :  defined(Math::GMPq::__GMP_CFLAGS) ? "ok 9\n" : "not ok 9\n";
+
+sub version_num {
+    return ($_[0] << 16) | ($_[1] << 8) | $_[2];
 }

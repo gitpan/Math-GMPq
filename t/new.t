@@ -113,7 +113,7 @@ if($f26 == $d) {$ok .= 'h'}
 my $f27 = Math::GMPq->new(36028797018964023);
 my $f28 = Math::GMPq->new('36028797018964023');
 
-if(defined($Config::Config{use64bitint})) {
+if(Math::GMPq::_has_longlong()) {
   if($f27 == $f28) {$ok .= 'i'}
 }
 else {
