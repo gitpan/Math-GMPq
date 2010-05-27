@@ -1,7 +1,8 @@
 mpq_t *		MPQ
 mpz_t *		MPZ
-mpf_t * 	MPF
-mpfr_t *	MPFR
+mpf_t * 		MPF
+mpfr_t *		MPFR
+gmp_randstate_t *	GMP_RANDSTATE
 
 INPUT
 MPQ
@@ -11,4 +12,6 @@ MPZ
 MPF
             $var = INT2PTR($type, SvIV(SvRV($arg)))
 MPFR
+            $var = INT2PTR($type, SvIV(SvRV($arg)))
+GMP_RANDSTATE
             $var = INT2PTR($type, SvIV(SvRV($arg)))

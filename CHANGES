@@ -1,3 +1,10 @@
+0.29
+ - Add random functions.
+ - Add Rmpq_snprintf and Rmpq_snprintf_ret.
+ - If there's no variable to be formatted, Rmpq_(f/s)printf no longer
+   need to be supplied with a dummy variable.
+ - Some buggy tests in printf.t hopefully fixed.
+
 0.28
  Requires gmp-4.2.0 or later.
  In response to bug http://rt.cpan.org/Ticket/Display.html?id=46499:

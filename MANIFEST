@@ -3,6 +3,7 @@ CHANGES
 Makefile.PL
 GMPq.pm
 GMPq.xs
+Random/t/gmp_random.t
 README
 t/aa_basic.t
 t/test1.t

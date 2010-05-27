@@ -1,5 +1,6 @@
     package Math::GMPq;
     use strict;
+    use Math::GMPq::Random;
     require Exporter;
     *import = \&Exporter::import;
     require DynaLoader;
@@ -43,6 +44,7 @@ use overload
 
     @Math::GMPq::EXPORT_OK = qw(
 __GNU_MP_VERSION __GNU_MP_VERSION_MINOR __GNU_MP_VERSION_PATCHLEVEL
+__GMP_CC __GMP_CFLAGS
 Rmpq_abs Rmpq_add Rmpq_canonicalize Rmpq_clear Rmpq_cmp Rmpq_cmp_si Rmpq_cmp_ui
 Rmpq_create_noval Rmpq_denref Rmpq_div Rmpq_div_2exp Rmpq_equal 
 Rmpq_fprintf
@@ -51,11 +53,16 @@ Rmpq_get_den Rmpq_get_num Rmpq_get_str Rmpq_init Rmpq_init_nobless Rmpq_inp_str
 Rmpq_inv Rmpq_mul Rmpq_mul_2exp Rmpq_neg Rmpq_numref Rmpq_out_str Rmpq_printf 
 Rmpq_set Rmpq_set_d Rmpq_set_den Rmpq_set_f Rmpq_set_num Rmpq_set_si Rmpq_set_str
 Rmpq_set_ui Rmpq_set_z Rmpq_sgn 
-Rmpq_sprintf Rmpq_sprintf_ret
+Rmpq_sprintf Rmpq_sprintf_ret Rmpq_snprintf Rmpq_snprintf_ret
 Rmpq_sub Rmpq_swap
 TRmpq_out_str TRmpq_inp_str
+qgmp_randseed qgmp_randseed_ui qgmp_randclear
+qgmp_randinit_default qgmp_randinit_mt qgmp_randinit_lc_2exp qgmp_randinit_lc_2exp_size
+qgmp_randinit_set qgmp_randinit_default_nobless qgmp_randinit_mt_nobless
+qgmp_randinit_lc_2exp_nobless qgmp_randinit_lc_2exp_size_nobless qgmp_randinit_set_nobless
+qgmp_urandomb_ui qgmp_urandomm_ui
     );
-    $Math::GMPq::VERSION = '0.28';
+    $Math::GMPq::VERSION = '0.29';
 
     DynaLoader::bootstrap Math::GMPq $Math::GMPq::VERSION;
 
@@ -68,9 +75,14 @@ Rmpq_get_den Rmpq_get_num Rmpq_get_str Rmpq_init Rmpq_init_nobless Rmpq_inp_str
 Rmpq_inv Rmpq_mul Rmpq_mul_2exp Rmpq_neg Rmpq_numref Rmpq_out_str Rmpq_printf 
 Rmpq_set Rmpq_set_d Rmpq_set_den Rmpq_set_f Rmpq_set_num Rmpq_set_si Rmpq_set_str
 Rmpq_set_ui Rmpq_set_z Rmpq_sgn 
-Rmpq_sprintf Rmpq_sprintf_ret
+Rmpq_sprintf Rmpq_sprintf_ret Rmpq_snprintf Rmpq_snprintf_ret
 Rmpq_sub Rmpq_swap
 TRmpq_out_str TRmpq_inp_str
+qgmp_randseed qgmp_randseed_ui qgmp_randclear
+qgmp_randinit_default qgmp_randinit_mt qgmp_randinit_lc_2exp qgmp_randinit_lc_2exp_size
+qgmp_randinit_set qgmp_randinit_default_nobless qgmp_randinit_mt_nobless
+qgmp_randinit_lc_2exp_nobless qgmp_randinit_lc_2exp_size_nobless qgmp_randinit_set_nobless
+qgmp_urandomb_ui qgmp_urandomm_ui
 )]);
 
 sub dl_load_flags {0} # Prevent DynaLoader from complaining and croaking
@@ -209,26 +221,45 @@ sub _rewrite {
 
 sub Rmpq_printf {
     local $| = 1;
-    die "Rmpz_printf must take 2 arguments: format string, and variable" if @_ != 2;
+    push @_, 0 if @_ == 1; # add a dummy second argument
+    die "Rmpz_printf must pass 2 arguments: format string, and variable" if @_ != 2;
     wrap_gmp_printf(@_);
 }
 
 sub Rmpq_fprintf {
-    die "Rmpq_fprintf must take 3 arguments: filehandle, format string, and variable" if @_ != 3;
+    push @_, 0 if @_ == 2; # add a dummy third argument
+    die "Rmpq_fprintf must pass 3 arguments: filehandle, format string, and variable" if @_ != 3;
     wrap_gmp_fprintf(@_);
 }
 
 sub Rmpq_sprintf {
-    die "Rmpq_sprintf must take 3 arguments: buffer, format string, and variable" if @_ != 3;
+    push @_, 0 if @_ == 2; # add a dummy third argument
+    die "Rmpq_sprintf must pass 3 arguments: buffer, format string, and variable" if @_ != 3;
     my $len = wrap_gmp_sprintf(@_);
     $_[0] = substr($_[0], 0, $len);
     return $len;
 }
 
 sub Rmpq_sprintf_ret {
-    die "Rmpq_sprintf must take 3 arguments: buffer, format string, and variable" if @_ != 3;
+    push @_, 0 if @_ == 2; # add a dummy third argument
+    die "Rmpq_sprintf_ret must pass 3 arguments: buffer, format string, and variable" if @_ != 3;
     my $len = wrap_gmp_sprintf(@_);
     return substr($_[0], 0, $len);
+}
+
+sub Rmpq_snprintf {
+    push @_, 0 if @_ == 3; # add a dummy third argument
+    die "Rmpq_snprintf must pass 4 arguments: buffer, bytes written, format string, and variable" if @_ != 4;
+    my $len = wrap_gmp_snprintf(@_);
+    $_[0] = substr($_[0], 0, $_[1] - 1);
+    return $len;
+}
+
+sub Rmpq_snprintf_ret {
+    push @_, 0 if @_ == 3; # add a dummy third argument
+    die "Rmpq_snprintf_ret must pass 4 arguments: buffer, bytes written, format string, and variable" if @_ != 4;
+    my $len = wrap_gmp_snprintf(@_);
+    return substr($_[0], 0, $_[1] - 1);
 }
 
 sub __GNU_MP_VERSION {return ___GNU_MP_VERSION()}
@@ -236,6 +267,22 @@ sub __GNU_MP_VERSION_MINOR {return ___GNU_MP_VERSION_MINOR()}
 sub __GNU_MP_VERSION_PATCHLEVEL {return ___GNU_MP_VERSION_PATCHLEVEL()}
 sub __GMP_CC {return ___GMP_CC()}
 sub __GMP_CFLAGS {return ___GMP_CFLAGS()}
+
+*qgmp_randseed =                      \&Math::GMPq::Random::Rgmp_randseed;
+*qgmp_randseed_ui =                   \&Math::GMPq::Random::Rgmp_randseed_ui;
+*qgmp_randclear =                     \&Math::GMPq::Random::Rgmp_randclear;
+*qgmp_randinit_default =              \&Math::GMPq::Random::Rgmp_randinit_default;
+*qgmp_randinit_mt =                   \&Math::GMPq::Random::Rgmp_randinit_mt;
+*qgmp_randinit_lc_2exp =              \&Math::GMPq::Random::Rgmp_randinit_lc_2exp;
+*qgmp_randinit_lc_2exp_size =         \&Math::GMPq::Random::Rgmp_randinit_lc_2exp_size;
+*qgmp_randinit_set =                  \&Math::GMPq::Random::Rgmp_randinit_set;
+*qgmp_randinit_default_nobless =      \&Math::GMPq::Random::Rgmp_randinit_default_nobless;
+*qgmp_randinit_mt_nobless =           \&Math::GMPq::Random::Rgmp_randinit_mt_nobless;
+*qgmp_randinit_lc_2exp_nobless =      \&Math::GMPq::Random::Rgmp_randinit_lc_2exp_nobless;
+*qgmp_randinit_lc_2exp_size_nobless = \&Math::GMPq::Random::Rgmp_randinit_lc_2exp_size_nobless;
+*qgmp_randinit_set_nobless =          \&Math::GMPq::Random::Rgmp_randinit_set_nobless;
+*qgmp_urandomb_ui =                   \&Math::GMPq::Random::Rgmp_urandomb_ui;
+*qgmp_urandomm_ui =                   \&Math::GMPq::Random::Rgmp_urandomm_ui;
 
 1;
 
@@ -587,6 +634,96 @@ __END__
     To read from an open filehandle (let's call it FH):
        TRmpq_inp_str($rop, \*FH, $base);
 
+   #######################
+
+   RANDOM NUMBER FUNCTIONS 
+
+   $state = qgmp_randinit_default();
+    This is the Math::GMPq interface to the gmp library function
+   'gmp_randinit_default'.
+    $state is blessed into package Math::GMPq::Random and will be
+    automatically cleaned up when it goes out of scope.
+    Initialize $state with a default algorithm. This will be a
+    compromise between speed and randomness, and is recommended for
+    applications with no special requirements. Currently this is
+    the gmp_randinit_mt function (Mersenne Twister algorithm).
+
+   $state = qgmp_randinit_mt();
+    This is the Math::GMPq interface to the gmp library function
+   'gmp_randinit_mt'.
+    Currently identical to fgmp_randinit_default().
+
+   $state = qgmp_randinit_lc_2exp($mpz, $ui, $m2exp);
+    This is the Math::GMPq interface to the gmp library function
+    'gmp_randinit_lc_2exp'. $mpz is a Math::GMP or Math::GMPz object,
+    so one of those modules is required in order to make use of this
+    function.
+    $state is blessed into package Math::GMPq::Random and will be
+    automatically cleaned up when it goes out of scope.
+    Initialize $state with a linear congruential algorithm
+    X = ($mpz*X + $ui) mod (2 ** $m2exp). The low bits of X in this
+    algorithm are not very random. The least significant bit will have a
+    period no more than 2, and the second bit no more than 4, etc. For
+    this reason only the high half of each X is actually used. 
+    When a random number of more than m2exp/2 bits is to be generated,
+    multiple iterations of the recurrence are used and the results
+    concatenated. 
+
+   $state = qgmp_randinit_lc_2exp_size($ui);
+    This is the Math::GMPq interface to the gmp library function
+   'gmp_randinit_lc_2exp_size'.
+    $state is blessed into package Math::GMPf::Random and will be
+    automatically cleaned up when it goes out of scope.
+    Initialize state for a linear congruential algorithm as per
+    gmp_randinit_lc_2exp. a, c and m2exp are selected from a table,
+    chosen so that $ui bits (or more) of each X will be used,
+    ie. m2exp/2 >= $ui. 
+    If $ui is bigger than the table data provides then the function fails
+    and dies with an appropriate error message. The maximum value for $ui
+    currently supported is 128. 
+
+   $state2 = qgmp_randinit_set($state1);
+    This is the Math::GMPq interface to the gmp library function
+   'gmp_randinit_set'.
+    $state2 is blessed into package Math::GMPf::Random and will be
+    automatically cleaned up when it goes out of scope.
+    Initialize $state2 with a copy of the algorithm and state from
+    $state1.
+
+   $state = qgmp_randinit_default_nobless();
+   $state = qgmp_randinit_mt_nobless();
+   $state = qgmp_randinit_lc_2exp_nobless($mpz, $ui, $m2exp);
+   $state2 = qgmp_randinit_set_nobless($state1);
+    As for the above comparable function, but $state is not blessed into
+    any package. (Generally not useful - but they're available if you
+    want them.)
+
+   qgmp_randseed($state, $mpz); # $mpz is a Math::GMPz or Math::GMP object
+   qgmp_randseed_ui($state, $ui);
+    These are the Math::GMPz interfaces to the gmp library functions
+    'gmp_randseed' and 'gmp_randseed_ui'.
+    Seed an initialised (but not yet seeded) $state with $mpz/$ui.
+    Either Math::GMP or Math::GMPz is required for 'gmp_randseed'.   
+
+   $ui = qgmp_urandomb_ui($state, $bits);
+    This is the Math::GMPq interface to the gmp library function
+    'gmp_urandomb_ui'.
+    Return a uniformly distributed random number of $bits bits, ie. in
+    the range 0 to 2 ** ($bits - 1) inclusive. $bits must be less than or
+    equal to the number of bits in an unsigned long. 
+
+   $ui2 = qgmp_urandomm_ui($state, $ui1);
+    This is the Math::GMPq interface to the gmp library function
+    'gmp_urandomm_ui'.
+    Return a uniformly distributed random number in the range 0 to
+    $ui1 - 1, inclusive.  
+
+   qgmp_randclear($state);
+    Destroys $state, as also does Math::GMPq::Random::DESTROY - two
+    identical functions.
+    Use only if $state is an unblessed object - ie if it was initialised
+    using one of the qgmp_randinit*_nobless functions. 
+
    ####################
 
    OPERATOR OVERLOADING 
@@ -691,7 +828,11 @@ __END__
     This function changed with the release of Math-GMPq-0.27.
     Now (unlike the GMP counterpart), it is limited to taking 2
     arguments - the format string, and the variable to be formatted.
-    That is, you can format only one variable at a time. 
+    That is, you can format only one variable at a time.
+    If there is no variable to be formatted, then the final arg
+    can be omitted - a suitable dummy arg will be passed to the XS
+    code for you. ie the following will work:
+     Rmpq_printf("hello world\n");
     Returns the number of characters written, or -1 if an error
     occurred.
 
@@ -700,6 +841,10 @@ __END__
     This function (unlike the GMP counterpart) is limited to taking
     3 arguments - the filehandle, the format string, and the variable
     to be formatted. That is, you can format only one variable at a time.
+    If there is no variable to be formatted, then the final arg
+    can be omitted - a suitable dummy arg will be passed to the XS
+    code for you. ie the following will work:
+     Rmpq_fprintf($fh, "hello world\n");
     Other than that, the rules outlined above wrt Rmpq_printf apply.
     Returns the number of characters written, or -1 if an error
     occurred.
@@ -708,9 +853,13 @@ __END__
 
     This function (unlike the GMP counterpart) is limited to taking
     3 arguments - the buffer, the format string, and the variable
-    to be formatted. $buffer must be large enough to accommodate the
-    formatted string, and is truncated to the length of that formatted
-    string. If you prefer to have the resultant string returned (rather
+    to be formatted. If there is no variable to be formatted, then the
+    final arg can be omitted - a suitable dummy arg will be passed to
+    the XS code for you. ie the following will work:
+     Rmpq_sprintf($buffer, "hello world\n");
+    $buffer must be large enough to accommodate the formatted string,
+    and is truncated to the length of that formatted string.
+    If you prefer to have the resultant string returned (rather
     than stored in $buffer), use Rmpq_sprintf_ret instead - which will
     also leave the length of $buffer unaltered.
     Returns the number of characters written, or -1 if an error
@@ -722,6 +871,36 @@ __END__
     storing it in $buffer. $buffer needs to be large enough to 
     accommodate the formatted string. The length of $buffer will be
     unaltered.
+
+   $si = Rmpq_snprintf($buffer, $bytes, $format_string, $var);
+
+    Form a null-terminated string in $buffer. No more than $bytes 
+    bytes will be written. To get the full output, $bytes must be
+    enough for the string and null-terminator. $buffer must be large
+    enough to accommodate the string and null-terminator, and is
+    truncated to the length of that string (and null-terminator).
+    The return value is the total number of characters which ought
+    to have been produced, excluding the terminating null.
+    If $si >= $bytes then the actual output has been truncated to
+    the first $bytes-1 characters, and a null appended.
+    This function (unlike the GMP counterpart) is limited to taking
+    4 arguments - the buffer, the maximum number of bytes to be
+    returned, the format string, and the variable to be formatted.
+    If there is no variable to be formatted, then the final arg can
+    be omitted - a suitable dummy arg will be passed to the XS code
+    for you. ie the following will work:
+     Rmpq_snprintf($buffer, 12, "hello world");
+    If you prefer to have the resultant string returned (rather
+    than stored in $buffer), use Rmpq_snprintf_ret instead - which will
+    also leave the length of $buffer unaltered.
+
+   $string = Rmpq_snprintf_ret($buffer, $bytes, $format_string, $var);
+
+    As for Rmpq_snprintf, but returns the formatted string, as well as
+    storing it in $buffer. $buffer needs to be large enough to 
+    accommodate the formatted string. The length of $buffer will be
+    unaltered. The length of $string (as reported by perl's length
+    function) will be no greater than $bytes.
 
    ################
 
@@ -736,7 +915,7 @@ __END__
 
     This program is free software; you may redistribute it and/or 
     modify it under the same terms as Perl itself.
-    Copyright 2006-2008, Sisyphus
+    Copyright 2006-2008, 2009, 2010, Sisyphus
 
 =head1 AUTHOR
 

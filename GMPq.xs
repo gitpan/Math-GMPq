@@ -1505,6 +1505,54 @@ SV * wrap_gmp_sprintf(char * stream, SV * a, SV * b) {
      croak("Unrecognised type supplied as argument to Rmpq_sprintf");
 }
 
+SV * wrap_gmp_snprintf(char * stream, SV * bytes, SV * a, SV * b) {
+     int ret;
+     if(sv_isobject(b)) { 
+       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPz") ||
+         strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMP") ||
+         strEQ(HvNAME(SvSTASH(SvRV(b))), "GMP::Mpz")) {
+         ret = gmp_snprintf(stream, (size_t)SvUV(bytes), SvPV_nolen(a), *(INT2PTR(mpz_t *, SvIV(SvRV(b)))));
+         return newSViv(ret);
+       }
+
+       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPq") ||
+         strEQ(HvNAME(SvSTASH(SvRV(b))), "GMP::Mpq")) {
+         ret = gmp_snprintf(stream, (size_t)SvUV(bytes), SvPV_nolen(a), *(INT2PTR(mpq_t *, SvIV(SvRV(b)))));
+         return newSViv(ret);
+       }
+
+       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPf") ||
+         strEQ(HvNAME(SvSTASH(SvRV(b))), "GMP::Mpf")) {
+         ret = gmp_snprintf(stream, (size_t)SvUV(bytes), SvPV_nolen(a), *(INT2PTR(mpf_t *, SvIV(SvRV(b)))));
+         return newSViv(ret);
+       }
+
+       croak("Unrecognised object supplied as argument to Rmpq_snprintf");
+     } 
+
+     if(SvUOK(b)) {
+       ret = gmp_snprintf(stream, (size_t)SvUV(bytes), SvPV_nolen(a), SvUV(b));
+       return newSViv(ret);
+     }
+
+     if(SvIOK(b)) {
+       ret = gmp_snprintf(stream, (size_t)SvUV(bytes), SvPV_nolen(a), SvIV(b));
+       return newSViv(ret);
+     }
+
+     if(SvNOK(b)) {
+       ret = gmp_snprintf(stream, (size_t)SvUV(bytes), SvPV_nolen(a), SvNV(b));
+       return newSViv(ret);
+     }
+
+     if(SvPOK(b)) {
+       ret = gmp_snprintf(stream, (size_t)SvUV(bytes), SvPV_nolen(a), SvPV_nolen(b));
+       return newSViv(ret);
+     }
+
+     croak("Unrecognised type supplied as argument to Rmpq_snprintf");
+}
+
 SV * _itsa(SV * a) {
      if(SvUOK(a)) return newSVuv(1);
      if(SvIOK(a)) return newSVuv(2);
@@ -2323,6 +2371,13 @@ wrap_gmp_fprintf (stream, a, b)
 SV *
 wrap_gmp_sprintf (stream, a, b)
 	char *	stream
+	SV *	a
+	SV *	b
+
+SV *
+wrap_gmp_snprintf (stream, bytes, a, b)
+	char *	stream
+	SV *	bytes
 	SV *	a
 	SV *	b
 
