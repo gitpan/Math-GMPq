@@ -1,3 +1,7 @@
+0.31
+ - Fix Random.xs so that it compiles with gmp-4 (not just gmp-5).
+   Thanks Rob Kuo (https://rt.cpan.org/Ticket/Display.html?id=58501)
+
 0.29
  - Add random functions.
  - Add Rmpq_snprintf and Rmpq_snprintf_ret.

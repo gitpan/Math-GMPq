@@ -62,7 +62,7 @@ qgmp_randinit_set qgmp_randinit_default_nobless qgmp_randinit_mt_nobless
 qgmp_randinit_lc_2exp_nobless qgmp_randinit_lc_2exp_size_nobless qgmp_randinit_set_nobless
 qgmp_urandomb_ui qgmp_urandomm_ui
     );
-    $Math::GMPq::VERSION = '0.29';
+    $Math::GMPq::VERSION = '0.31';
 
     DynaLoader::bootstrap Math::GMPq $Math::GMPq::VERSION;
 

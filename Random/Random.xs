@@ -6,6 +6,10 @@
 #include <stdlib.h>
 #include <gmp.h>
 
+#if __GNU_MP_VERSION < 5
+#define mp_bitcnt_t unsigned long int
+#endif
+
 SV * Rgmp_randinit_default() {
      gmp_randstate_t * rand_obj;
      SV * obj_ref, * obj;
@@ -92,7 +96,7 @@ SV * Rgmp_randinit_set(gmp_randstate_t * op) {
 SV * Rgmp_urandomb_ui(gmp_randstate_t * state, SV * n) {
      unsigned long max, req = (unsigned long)SvUV(n);
      max = sizeof(unsigned long) * 8;
-     if(req > max) croak("In Math::GMPq::Random::Rgmp_urandomb_ui, requested %d bits, but %d is the maximum allowed", req, max);
+     if(req > max) croak("In Math::GMPq::Random::Rgmp_urandomb_ui, requested %u bits, but %u is the maximum allowed", req, max);
      return newSVuv(gmp_urandomb_ui(*state, req));
 }
 
