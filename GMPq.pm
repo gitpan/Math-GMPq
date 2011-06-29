@@ -62,7 +62,7 @@ qgmp_randinit_set qgmp_randinit_default_nobless qgmp_randinit_mt_nobless
 qgmp_randinit_lc_2exp_nobless qgmp_randinit_lc_2exp_size_nobless qgmp_randinit_set_nobless
 qgmp_urandomb_ui qgmp_urandomm_ui
     );
-    $Math::GMPq::VERSION = '0.31';
+    $Math::GMPq::VERSION = '0.32';
 
     DynaLoader::bootstrap Math::GMPq $Math::GMPq::VERSION;
 
@@ -415,9 +415,9 @@ __END__
 
    "$str" simply means a string of symbols that represent a number,
    eg "1234567890987654321234567/7" which might be a base 10 number,
-   or "zsa34760sdfgq123r5/11" which would have to represent a base 36
-   number (because "z" is a valid digit only in base 36). Valid
-   bases for GMP numbers are 2 to 62 (inclusive).
+   or "zsa34760sdfgq123r5/11" which would have to represent at least
+   a base 36 number (because "z" is a valid digit only in bases 36
+   and above). Valid bases for GMP numbers are 2 to 62 (inclusive).
 
    ############
 
@@ -489,10 +489,11 @@ __END__
     integer) or a string that represents a numeric value. If $arg is a
     string, an optional additional argument that specifies the base of
     the number can be supplied to new(). If base is 0 (or not supplied)
-    then the leading characters are used: 0x or 0X for hex, 0b or 0B
-    for binary, 0 for octal, or decimal otherwise. Note that this is
-    done separately for the numerator and denominator, so for instance
-    0xEF/100 is 239/100, whereas 0xEF/0x100 is 239/256.
+    then the leading characters of the string are used: 0x or 0X for
+    hex, 0b or 0B for binary, 0 for octal, or decimal otherwise. Note
+    that this is done separately for the numerator and denominator, so
+    for instance 0xEF/100 is 239/100, whereas 0xEF/0x100 is 239/256.
+    Legal values for the base are 0 and 2..62.
 
    ####################
 
@@ -789,25 +790,29 @@ __END__
    OTHER
 
    $GMP_version = Math::GMPq::gmp_v;
-    Returns the version of the GMP library (eg 4.1.3). The function
-    is not exportable.
+    Returns the version of the GMP library (eg 4.1.3) being used by
+    Math::GMPq. The function is not exportable. 
 
    $GMP_cc = Math::GMPq::__GMP_CC;
    $GMP_cflags = Math::GMPq::__GMP_CFLAGS;
-    These functions are not exportable.
     If Math::GMPq has been built against gmp-4.2.3 or later,
     returns respectively the CC and CFLAGS settings that were used
-    to compile the gmp library.
+    to compile the gmp library against which Math::GMPq was built.
+    (Values are as specified in the gmp.h that was used to build
+    Math::GMPq.)
     Returns undef if Math::GMPq has been built against an earlier
-    version of the gmp library. 
+    version of the gmp library.
+    (These functions are in @EXPORT_OK and are therefore exportable
+    by request. They are not listed under the ":mpq" tag.)  
 
    $major = Math::GMPq::__GNU_MP_VERSION;
    $minor = Math::GMPq::__GNU_MP_VERSION_MINOR;
    $patchlevel = Math::GMPq::__GNU_MP_VERSION_PATCHLEVEL;
     Returns respectively the major, minor, and patchlevel numbers
-    for the GMP library version used by Math::GMPq. (These 
-    functions are in @EXPORT_OK and are therefore exportable by
-    request.) 
+    for the GMP library version used to build Math::GMPq. Values are
+    as specified in the gmp.h that was used to build Math::GMPq.
+    (These functions are in @EXPORT_OK and are therefore exportable
+    by request. They are not listed under the ":mpq" tag.) 
 
    ################
 
@@ -915,7 +920,7 @@ __END__
 
     This program is free software; you may redistribute it and/or 
     modify it under the same terms as Perl itself.
-    Copyright 2006-2008, 2009, 2010, Sisyphus
+    Copyright 2006-2008, 2009, 2010, 2011 Sisyphus
 
 =head1 AUTHOR
 

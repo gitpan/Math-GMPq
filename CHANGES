@@ -1,3 +1,7 @@
+0.32
+ - In the documentation, elaborate on the way that Math::GMPq::get_v() and 
+   __GNU_MP_VERSION & friends determine their values. (Thanks Vincent Lefevre.)
+
 0.31
  - Fix Random.xs so that it compiles with gmp-4 (not just gmp-5).
    Thanks Rob Kuo (https://rt.cpan.org/Ticket/Display.html?id=58501)
