@@ -87,37 +87,47 @@ $ok = '';
 
 my $f19 = Math::GMPq->new('z/1', 62);
 if($f19 == 61) {$ok .= 'a'}
+else{warn "3a: Expected 61\n    Got $f19\n"}
 
 my $f20 = Math::GMPq->new();
 Rmpq_set_ui($f20, $ui, 1);
 if($f20 == $ui) {$ok .= 'b'}
+else{warn "3b: Expected $ui\n    Got $f20\n"}
 
 my $f21 = Math::GMPq->new($ui);
 if($f21 == $ui) {$ok .= 'c'}
+else{warn "3c: Expected $ui\n    Got $f21\n"}
 
 my $f22 = Math::GMPq->new($si);
 if($f22 == $si) {$ok .= 'd'}
+else{warn "3d: Expected $si\n    Got $f22\n"}
 
 my $f23 = Math::GMPq->new($d);
 if($f23 == $d) {$ok .= 'e'}
+else{warn "3e: Expected $d\n    Got $f23\n"}
 
 my $f24 = Math::GMPq->new($str);
 if($f24 == $str) {$ok .= 'f'}
+else{warn "3f: Expected $str\n    Got $f24\n"}
 
 my $f25 = Math::GMPq->new($str, 10);
 if($f25 == $str) {$ok .= 'g'}
+else{warn "3g: Expected $str\n    Got $f25\n"}
 
 my $f26 = Math::GMPq->new($d);
 if($f26 == $d) {$ok .= 'h'}
+else{warn "3h: Expected $d\n    Got $f26\n"}
 
 my $f27 = Math::GMPq->new(36028797018964023);
 my $f28 = Math::GMPq->new('36028797018964023');
 
 if(Math::GMPq::_has_longlong()) {
   if($f27 == $f28) {$ok .= 'i'}
+  else{warn "3i: Should have $f27 == $f28\n"}
 }
 else {
   if($f27 != $f28) {$ok .= 'i'}
+  else{warn "3i: Should have $f27 != $f28\n"}
 }
 
 if($ok eq 'abcdefghi') {print "ok 3\n"}

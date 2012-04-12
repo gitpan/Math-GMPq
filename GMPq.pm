@@ -37,7 +37,6 @@ use overload
     '=='   => \&overload_equiv,
     '!='   => \&overload_not_equiv,
     '!'    => \&overload_not,
-    'not'  => \&overload_not,
     '='    => \&overload_copy,
     'int'  => \&overload_int,
     'abs'  => \&overload_abs;
@@ -62,7 +61,7 @@ qgmp_randinit_set qgmp_randinit_default_nobless qgmp_randinit_mt_nobless
 qgmp_randinit_lc_2exp_nobless qgmp_randinit_lc_2exp_size_nobless qgmp_randinit_set_nobless
 qgmp_urandomb_ui qgmp_urandomm_ui
     );
-    $Math::GMPq::VERSION = '0.32';
+    $Math::GMPq::VERSION = '0.33';
 
     DynaLoader::bootstrap Math::GMPq $Math::GMPq::VERSION;
 
@@ -333,7 +332,9 @@ __END__
    # or just use the new() function:
    my $rational = Math::GMPq->new('1234/1179');
 
-   # Perform some operations ... see 'FUNCTIONS' below.
+   # Perform some operations, either by using function calls
+   # or by utilising operator overloading ... see 'FUNCTIONS'
+   # below.
 
    .
    .
@@ -341,8 +342,10 @@ __END__
    # print out the value held by $bn1 (in octal):
    print Rmpq_get_str($bn1, 8), "\n"; # prints '170513/2'
 
-   # print out the value held by $bn1 (in decimal):
-   print Rmpq_get_str($bn1, 10); # prints '61771/2'.
+   # print out the value held by $bn1 (in decimal) with:
+   print Rmpq_get_str($bn1, 10), "\n"; # prints '61771/2'.
+   # or, courtesy of operator loading, simply with:
+   print $bn1, "\n"; # again prints '61771/2'.
 
    # print out the value held by $bn1 (in base 29)
    # using the (alternative) Rmpq_out_str()
@@ -737,7 +740,7 @@ __END__
    
     + - * /
     += -= *= /=
-    == != ! not
+    == != !
     < <= > >= <=>
     = "" abs
 
@@ -754,8 +757,8 @@ __END__
 
     1. If the variable is an unsigned long then that value is used.
        The variable is considered to be an unsigned long if 
-       (perl 5.8) the UOK flag is set or if (perl 5.6) SvIsUV() 
-       returns true.
+       (perl 5.8 and later) the UOK flag is set or if (perl 5.6)
+       SvIsUV() returns true.
 
     2. If the variable is a signed long int, then that value is used.
        The variable is considered to be a signed long int if the

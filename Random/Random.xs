@@ -10,7 +10,15 @@
 #define mp_bitcnt_t unsigned long int
 #endif
 
-SV * Rgmp_randinit_default() {
+#ifndef Newx
+#  define Newx(v,n,t) New(0,v,n,t)
+#endif
+
+#ifndef Newxz
+#  define Newxz(v,n,t) Newz(0,v,n,t)
+#endif
+
+SV * Rgmp_randinit_default(void) {
      gmp_randstate_t * rand_obj;
      SV * obj_ref, * obj;
 
@@ -25,7 +33,7 @@ SV * Rgmp_randinit_default() {
      return obj_ref;
 }
 
-SV * Rgmp_randinit_mt() {
+SV * Rgmp_randinit_mt(void) {
      gmp_randstate_t * rand_obj;
      SV * obj_ref, * obj;
 
@@ -106,7 +114,7 @@ SV * Rgmp_urandomm_ui(gmp_randstate_t * state, SV * n) {
 
 /*##########################################*/
 
-SV * Rgmp_randinit_default_nobless() {
+SV * Rgmp_randinit_default_nobless(void) {
      gmp_randstate_t * rand_obj;
      SV * obj_ref, * obj;
 
@@ -121,7 +129,7 @@ SV * Rgmp_randinit_default_nobless() {
      return obj_ref;
 }
 
-SV * Rgmp_randinit_mt_nobless() {
+SV * Rgmp_randinit_mt_nobless(void) {
      gmp_randstate_t * rand_obj;
      SV * obj_ref, * obj;
 
@@ -223,9 +231,11 @@ PROTOTYPES: DISABLE
 
 SV *
 Rgmp_randinit_default ()
+		
 
 SV *
 Rgmp_randinit_mt ()
+		
 
 SV *
 Rgmp_randinit_lc_2exp (a, c, m2exp)
@@ -253,9 +263,11 @@ Rgmp_urandomm_ui (state, n)
 
 SV *
 Rgmp_randinit_default_nobless ()
+		
 
 SV *
 Rgmp_randinit_mt_nobless ()
+		
 
 SV *
 Rgmp_randinit_lc_2exp_nobless (a, c, m2exp)

@@ -1,3 +1,7 @@
+0.33
+ - Remove 'not' from overloads. Apparently achieved nothing anyway, and 5.16
+   warns that it's invalid.
+
 0.32
  - In the documentation, elaborate on the way that Math::GMPq::get_v() and 
    __GNU_MP_VERSION & friends determine their values. (Thanks Vincent Lefevre.)

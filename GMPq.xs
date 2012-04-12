@@ -20,11 +20,19 @@
 #define SvUOK SvIsUV
 #endif
 
+#ifndef Newx
+#  define Newx(v,n,t) New(0,v,n,t)
+#endif
+
+#ifndef Newxz
+#  define Newxz(v,n,t) Newz(0,v,n,t)
+#endif
+
 void Rmpq_canonicalize (mpq_t * p) {
      mpq_canonicalize(*p);
 }
 
-SV * Rmpq_init() {
+SV * Rmpq_init(void) {
      mpq_t * mpq_t_obj;
      SV * obj_ref, * obj;
 
@@ -39,7 +47,7 @@ SV * Rmpq_init() {
      return obj_ref;
 }
 
-SV * Rmpq_init_nobless() {
+SV * Rmpq_init_nobless(void) {
      mpq_t * mpq_t_obj;
      SV * obj_ref, * obj;
 
@@ -1353,7 +1361,7 @@ SV * overload_div_eq(SV * a, SV * b, SV * third) {
 
 }
 
-SV * gmp_v() {
+SV * gmp_v(void) {
      return newSVpv(gmp_version, 0);
 }
 
@@ -1564,7 +1572,7 @@ SV * _itsa(SV * a) {
      return newSVuv(0);
 }
 
-int _has_longlong() {
+int _has_longlong(void) {
 #ifdef USE_64_BIT_INT
     return 1;
 #else
@@ -1572,7 +1580,7 @@ int _has_longlong() {
 #endif
 }
 
-int _has_longdouble() {
+int _has_longdouble(void) {
 #ifdef USE_LONG_DOUBLE
     return 1;
 #else
@@ -1581,7 +1589,7 @@ int _has_longdouble() {
 }
 
 /* Has inttypes.h been included ? */
-int _has_inttypes() {
+int _has_inttypes(void) {
 #ifdef _MSC_VER
 return 0;
 #else
@@ -1593,19 +1601,19 @@ return 0;
 #endif
 }
 
-SV * ___GNU_MP_VERSION() {
+SV * ___GNU_MP_VERSION(void) {
      return newSVuv(__GNU_MP_VERSION);
 }
 
-SV * ___GNU_MP_VERSION_MINOR() {
+SV * ___GNU_MP_VERSION_MINOR(void) {
      return newSVuv(__GNU_MP_VERSION_MINOR);
 }
 
-SV * ___GNU_MP_VERSION_PATCHLEVEL() {
+SV * ___GNU_MP_VERSION_PATCHLEVEL(void) {
      return newSVuv(__GNU_MP_VERSION_PATCHLEVEL);
 }
 
-SV * ___GMP_CC() {
+SV * ___GMP_CC(void) {
 #ifdef __GMP_CC
      char * ret = __GMP_CC;
      return newSVpv(ret, 0);
@@ -1614,7 +1622,7 @@ SV * ___GMP_CC() {
 #endif
 }
 
-SV * ___GMP_CFLAGS() {
+SV * ___GMP_CFLAGS(void) {
 #ifdef __GMP_CFLAGS
      char * ret = __GMP_CFLAGS;
      return newSVpv(ret, 0);
@@ -1647,9 +1655,11 @@ Rmpq_canonicalize (p)
 
 SV *
 Rmpq_init ()
+		
 
 SV *
 Rmpq_init_nobless ()
+		
 
 void
 DESTROY (p)
@@ -2356,6 +2366,7 @@ overload_div_eq (a, b, third)
 
 SV *
 gmp_v ()
+		
 
 SV *
 wrap_gmp_printf (a, b)
@@ -2387,25 +2398,33 @@ _itsa (a)
 
 int
 _has_longlong ()
+		
 
 int
 _has_longdouble ()
+		
 
 int
 _has_inttypes ()
+		
 
 SV *
 ___GNU_MP_VERSION ()
+		
 
 SV *
 ___GNU_MP_VERSION_MINOR ()
+		
 
 SV *
 ___GNU_MP_VERSION_PATCHLEVEL ()
+		
 
 SV *
 ___GMP_CC ()
+		
 
 SV *
 ___GMP_CFLAGS ()
+		
 
