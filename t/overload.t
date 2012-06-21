@@ -3,7 +3,7 @@ use strict;
 use Math::GMPq qw(:mpq);
 use Math::BigInt; # for some error checking
 
-print "1..35\n";
+print "1..36\n";
 
 print "# Using gmp version ", Math::GMPq::gmp_v(), "\n";
 
@@ -585,4 +585,27 @@ if($] >= 5.008) {
 else {
   warn "Skipping test 35 - no overloading of 'int' on perl $]\n";
   print "ok 35\n";
+}
+
+Rmpq_set_ui($p, 113, 73);
+$q = $p;
+
+$ok = '';
+
+$p++;
+$ok .= 'a' if $p == $q + 1;
+
+++$p;
+$ok .= 'b' if $p == $q + 2;
+
+$p--;
+$ok .= 'c' if $p == $q + 1;
+
+--$p;
+$ok .= 'd' if $p == $q;
+
+if($ok eq 'abcd') {print "ok 36\n"}
+else {
+  warn "\$ok: $ok\n";
+  print "not ok 36\n";
 }

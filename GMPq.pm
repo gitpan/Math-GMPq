@@ -20,6 +20,8 @@ use subs qw( __GNU_MP_VERSION __GNU_MP_VERSION_MINOR __GNU_MP_VERSION_PATCHLEVEL
              __GMP_CC __GMP_CFLAGS);
 
 use overload
+    '++'   => \&overload_inc,
+    '--'   => \&overload_dec,
     '+'    => \&overload_add,
     '-'    => \&overload_sub,
     '*'    => \&overload_mul,
@@ -61,9 +63,10 @@ qgmp_randinit_set qgmp_randinit_default_nobless qgmp_randinit_mt_nobless
 qgmp_randinit_lc_2exp_nobless qgmp_randinit_lc_2exp_size_nobless qgmp_randinit_set_nobless
 qgmp_urandomb_ui qgmp_urandomm_ui
     );
-    $Math::GMPq::VERSION = '0.33';
+    our $VERSION = '0.35';
+    $VERSION = eval $VERSION;
 
-    DynaLoader::bootstrap Math::GMPq $Math::GMPq::VERSION;
+    DynaLoader::bootstrap Math::GMPq $VERSION;
 
     %Math::GMPq::EXPORT_TAGS =(mpq => [qw(
 Rmpq_abs Rmpq_add Rmpq_canonicalize Rmpq_clear Rmpq_cmp Rmpq_cmp_si Rmpq_cmp_ui
@@ -732,21 +735,27 @@ __END__
 
    OPERATOR OVERLOADING 
 
-   Overloading occurs with numbers, strings and Math::GMPq objects.
+   Overloading occurs with numbers, strings,Math::GMPq objects and, to a
+   limited extent, Math::MPFR objects (iff version 3.13 or later of 
+   Math::MPFR has been installed).
    Strings are first converted to Math::GMPq objects, then canonicalized.
    See the Rmpq_set_str documentation (above) in the section "ASSIGNMENT
    FUNCTIONS" regarding permissible string formats.
    The following operators are overloaded:
    
     + - * /
-    += -= *= /=
+    += -= *= /= ++ --
     == != !
     < <= > >= <=>
     = "" abs
 
     Atempting to use the overloaded operators with objects that
     have been blessed into some package other than 'Math::GMPq'
-    will not work.
+    or 'Math::MPFR' (limited applications) will not work.
+    Math::MPFR objects can be used only with '+', '-', '*', '/'
+    and '**' operators, and will work only if Math::MPFR is at
+    version 3.13 or later - in which case the operation will
+    return a Math::MPFR object.
 
     In those situations where the overload subroutine operates on 2
     perl variables, then obviously one of those perl variables is
@@ -781,7 +790,8 @@ __END__
        (because 'ff' is not a valid base 10 number). That needs to
        be rewritten as '0xa123/0xff'.
 
-    5. If the variable is a Math::GMPq object then the value of that
+    5. If the variable is a Math::GMPq object (or, for operators
+       specified above, a Math::MPFR object) then the value of that
        object is used.
 
     6. If none of the above is true, then the second variable is

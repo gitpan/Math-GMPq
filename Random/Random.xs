@@ -224,6 +224,12 @@ void Rgmp_randclear_ptr(gmp_randstate_t * p) {
 /* free perl object only */
      Safefree(p);
 }
+
+SV * _wrap_count(void) {
+     return newSVuv(PL_sv_count);
+}
+
+
 MODULE = Math::GMPq::Random	PACKAGE = Math::GMPq::Random	
 
 PROTOTYPES: DISABLE
@@ -380,4 +386,8 @@ Rgmp_randclear_ptr (p)
         }
         /* must have used dXSARGS; list context implied */
 	return; /* assume stack size is correct */
+
+SV *
+_wrap_count ()
+		
 

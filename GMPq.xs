@@ -338,31 +338,33 @@ SV * get_refcnt(SV * s) {
 
 /* Finish typemapping - typemap 1st arg only */
 
-SV * overload_mul(mpq_t * a, SV * b, SV * third) {
+SV * overload_mul(SV * a, SV * b, SV * third) {
      mpq_t * mpq_t_obj;
      SV * obj_ref, * obj;
 
-     New(1, mpq_t_obj, 1, mpq_t);
-     if(mpq_t_obj == NULL) croak("Failed to allocate memory in overload_mul function");
-     obj_ref = newSV(0);
-     obj = newSVrv(obj_ref, "Math::GMPq");
-     mpq_init(*mpq_t_obj);
-     sv_setiv(obj, INT2PTR(IV, mpq_t_obj));
-     SvREADONLY_on(obj);
+     if(!sv_isobject(b) || strNE(HvNAME(SvSTASH(SvRV(b))), "Math::MPFR")) {
+       New(1, mpq_t_obj, 1, mpq_t);
+       if(mpq_t_obj == NULL) croak("Failed to allocate memory in overload_mul function");
+       obj_ref = newSV(0);
+       obj = newSVrv(obj_ref, "Math::GMPq");
+       mpq_init(*mpq_t_obj);
+       sv_setiv(obj, INT2PTR(IV, mpq_t_obj));
+       SvREADONLY_on(obj);
+     }
 
 #ifndef USE_64_BIT_INT
      if(SvIOK(b)) {
        mpq_set_d(*mpq_t_obj, SvNV(b));
-       mpq_mul(*mpq_t_obj, *a, *mpq_t_obj);
+       mpq_mul(*mpq_t_obj, *(INT2PTR(mpq_t *, SvIV(SvRV(a)))), *mpq_t_obj);
        return obj_ref;
-       }
+     }
 #else
      if(SvIOK(b)) {
        if(mpq_set_str(*mpq_t_obj, SvPV_nolen(b), 0))
          croak("Invalid string supplied to Math::GMPq::overload_mul");
-       mpq_mul(*mpq_t_obj, *a, *mpq_t_obj);
+       mpq_mul(*mpq_t_obj, *(INT2PTR(mpq_t *, SvIV(SvRV(a)))), *mpq_t_obj);
        return obj_ref;
-       }
+     }
 #endif
 
      if(SvNOK(b)) {
@@ -371,53 +373,82 @@ SV * overload_mul(mpq_t * a, SV * b, SV * third) {
 #else
        mpq_set_d(*mpq_t_obj, SvNV(b));
 #endif
-       mpq_mul(*mpq_t_obj, *a, *mpq_t_obj);
+       mpq_mul(*mpq_t_obj, *(INT2PTR(mpq_t *, SvIV(SvRV(a)))), *mpq_t_obj);
        return obj_ref;
-       }
+     }
 
      if(SvPOK(b)) {
        if(mpq_set_str(*mpq_t_obj, SvPV_nolen(b), 0))
          croak("Invalid string supplied to Math::GMPq::overload_mul");
        mpq_canonicalize(*mpq_t_obj);
-       mpq_mul(*mpq_t_obj, *a, *mpq_t_obj);
+       mpq_mul(*mpq_t_obj, *(INT2PTR(mpq_t *, SvIV(SvRV(a)))), *mpq_t_obj);
        return obj_ref;
-       }
+     }
 
      if(sv_isobject(b)) {
        if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPq")) {
-         mpq_mul(*mpq_t_obj, *a, *(INT2PTR(mpq_t *, SvIV(SvRV(b)))));
+         mpq_mul(*mpq_t_obj, *(INT2PTR(mpq_t *, SvIV(SvRV(a)))), *(INT2PTR(mpq_t *, SvIV(SvRV(b)))));
          return obj_ref;
-         }
        }
+       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::MPFR")) {
+         dSP;
+         SV * ret;
+         int count;
+
+         ENTER;
+
+         PUSHMARK(SP);
+         XPUSHs(b);
+         XPUSHs(a);
+         XPUSHs(sv_2mortal(newSViv(1)));
+         PUTBACK;
+
+         count = call_pv("Math::MPFR::overload_mul", G_SCALAR);
+
+         SPAGAIN;
+
+         if (count != 1)
+           croak("Error in Math::GMPq::overload_mul callback to Math::MPFR::overload_mul\n");
+
+         ret = POPs;
+
+         /* Avoid "Attempt to free unreferenced scalar" warning */
+         SvREFCNT_inc(ret);
+         LEAVE;
+         return ret;
+       }
+     }
 
      croak("Invalid argument supplied to Math::GMPq::overload_mul");
 }
 
-SV * overload_add(mpq_t * a, SV * b, SV * third) {
+SV * overload_add(SV * a, SV * b, SV * third) {
      mpq_t * mpq_t_obj;
      SV * obj_ref, * obj;
 
-     New(1, mpq_t_obj, 1, mpq_t);
-     if(mpq_t_obj == NULL) croak("Failed to allocate memory in overload_add function");
-     obj_ref = newSV(0);
-     obj = newSVrv(obj_ref, "Math::GMPq");
-     mpq_init(*mpq_t_obj);
-     sv_setiv(obj, INT2PTR(IV, mpq_t_obj));
-     SvREADONLY_on(obj);
+     if(!sv_isobject(b) || strNE(HvNAME(SvSTASH(SvRV(b))), "Math::MPFR")) {
+       New(1, mpq_t_obj, 1, mpq_t);
+       if(mpq_t_obj == NULL) croak("Failed to allocate memory in overload_add function");
+       obj_ref = newSV(0);
+       obj = newSVrv(obj_ref, "Math::GMPq");
+       mpq_init(*mpq_t_obj);
+       sv_setiv(obj, INT2PTR(IV, mpq_t_obj));
+       SvREADONLY_on(obj);
+     }
 
 #ifndef USE_64_BIT_INT
      if(SvIOK(b)) {
        mpq_set_d(*mpq_t_obj, SvNV(b));
-       mpq_add(*mpq_t_obj, *a, *mpq_t_obj);
+       mpq_add(*mpq_t_obj, *(INT2PTR(mpq_t *, SvIV(SvRV(a)))), *mpq_t_obj);
        return obj_ref;
-       }
+     }
 #else
      if(SvIOK(b)) {
        if(mpq_set_str(*mpq_t_obj, SvPV_nolen(b), 0))
          croak("Invalid string supplied to Math::GMPq::overload_add");
-       mpq_add(*mpq_t_obj, *a, *mpq_t_obj);
+       mpq_add(*mpq_t_obj, *(INT2PTR(mpq_t *, SvIV(SvRV(a)))), *mpq_t_obj);
        return obj_ref;
-       }
+     }
 #endif
 
      if(SvNOK(b)) {
@@ -426,56 +457,85 @@ SV * overload_add(mpq_t * a, SV * b, SV * third) {
 #else
        mpq_set_d(*mpq_t_obj, SvNV(b));
 #endif
-       mpq_add(*mpq_t_obj, *a, *mpq_t_obj);
+       mpq_add(*mpq_t_obj, *(INT2PTR(mpq_t *, SvIV(SvRV(a)))), *mpq_t_obj);
        return obj_ref;
-       }
+     }
 
 
      if(SvPOK(b)) {
        if(mpq_set_str(*mpq_t_obj, SvPV_nolen(b), 0))
          croak("Invalid string supplied to Math::GMPq::overload_add");
        mpq_canonicalize(*mpq_t_obj);
-       mpq_add(*mpq_t_obj, *a, *mpq_t_obj);
+       mpq_add(*mpq_t_obj, *(INT2PTR(mpq_t *, SvIV(SvRV(a)))), *mpq_t_obj);
        return obj_ref;
-       }
+     }
 
      if(sv_isobject(b)) {
        if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPq")) {
-         mpq_add(*mpq_t_obj, *a, *(INT2PTR(mpq_t *, SvIV(SvRV(b)))));
+         mpq_add(*mpq_t_obj, *(INT2PTR(mpq_t *, SvIV(SvRV(a)))), *(INT2PTR(mpq_t *, SvIV(SvRV(b)))));
          return obj_ref;
-         }
        }
+       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::MPFR")) {
+         dSP;
+         SV * ret;
+         int count;
+
+         ENTER;
+
+         PUSHMARK(SP);
+         XPUSHs(b);
+         XPUSHs(a);
+         XPUSHs(sv_2mortal(newSViv(1)));
+         PUTBACK;
+
+         count = call_pv("Math::MPFR::overload_add", G_SCALAR);
+
+         SPAGAIN;
+
+         if (count != 1)
+           croak("Error in Math::GMPq::overload_add callback to Math::MPFR::overload_add\n");
+
+         ret = POPs;
+
+         /* Avoid "Attempt to free unreferenced scalar" warning */
+         SvREFCNT_inc(ret);
+         LEAVE;
+         return ret;
+       }
+     }
 
      croak("Invalid argument supplied to Math::GMPq::overload_add");
 }
 
-SV * overload_sub(mpq_t * a, SV * b, SV * third) {
+SV * overload_sub(SV * a, SV * b, SV * third) {
      mpq_t * mpq_t_obj;
      SV * obj_ref, * obj;
 
-     New(1, mpq_t_obj, 1, mpq_t);
-     if(mpq_t_obj == NULL) croak("Failed to allocate memory in overload_sub function");
-     obj_ref = newSV(0);
-     obj = newSVrv(obj_ref, "Math::GMPq");
-     mpq_init(*mpq_t_obj);
-     sv_setiv(obj, INT2PTR(IV, mpq_t_obj));
-     SvREADONLY_on(obj);
+     if(!sv_isobject(b) || strNE(HvNAME(SvSTASH(SvRV(b))), "Math::MPFR")) {
+       New(1, mpq_t_obj, 1, mpq_t);
+       if(mpq_t_obj == NULL) croak("Failed to allocate memory in overload_sub function");
+       obj_ref = newSV(0);
+       obj = newSVrv(obj_ref, "Math::GMPq");
+       mpq_init(*mpq_t_obj);
+       sv_setiv(obj, INT2PTR(IV, mpq_t_obj));
+       SvREADONLY_on(obj);
+     }
 
 #ifndef USE_64_BIT_INT
      if(SvIOK(b)) {
        mpq_set_d(*mpq_t_obj, SvNV(b));
-       if(third == &PL_sv_yes) mpq_sub(*mpq_t_obj, *mpq_t_obj, *a);
-       else mpq_sub(*mpq_t_obj, *a, *mpq_t_obj);
+       if(third == &PL_sv_yes) mpq_sub(*mpq_t_obj, *mpq_t_obj, *(INT2PTR(mpq_t *, SvIV(SvRV(a)))));
+       else mpq_sub(*mpq_t_obj, *(INT2PTR(mpq_t *, SvIV(SvRV(a)))), *mpq_t_obj);
        return obj_ref;
-       }
+     }
 #else
      if(SvIOK(b)) {
        if(mpq_set_str(*mpq_t_obj, SvPV_nolen(b), 0))
          croak("Invalid string supplied to Math::GMPq::overload_sub");
-       if(third == &PL_sv_yes) mpq_sub(*mpq_t_obj, *mpq_t_obj, *a);
-       else mpq_sub(*mpq_t_obj, *a, *mpq_t_obj);
+       if(third == &PL_sv_yes) mpq_sub(*mpq_t_obj, *mpq_t_obj, *(INT2PTR(mpq_t *, SvIV(SvRV(a)))));
+       else mpq_sub(*mpq_t_obj, *(INT2PTR(mpq_t *, SvIV(SvRV(a)))), *mpq_t_obj);
        return obj_ref;
-       }
+     }
 #endif
 
      if(SvNOK(b)) {
@@ -484,58 +544,87 @@ SV * overload_sub(mpq_t * a, SV * b, SV * third) {
 #else
        mpq_set_d(*mpq_t_obj, SvNV(b));
 #endif
-       if(third == &PL_sv_yes) mpq_sub(*mpq_t_obj, *mpq_t_obj, *a);
-       else mpq_sub(*mpq_t_obj, *a, *mpq_t_obj);
+       if(third == &PL_sv_yes) mpq_sub(*mpq_t_obj, *mpq_t_obj, *(INT2PTR(mpq_t *, SvIV(SvRV(a)))));
+       else mpq_sub(*mpq_t_obj, *(INT2PTR(mpq_t *, SvIV(SvRV(a)))), *mpq_t_obj);
        return obj_ref;
-       }
+     }
 
      if(SvPOK(b)) {
        if(mpq_set_str(*mpq_t_obj, SvPV_nolen(b), 0))
          croak("Invalid string supplied to Math::GMPq::overload_sub");
        mpq_canonicalize(*mpq_t_obj);
-       if(third == &PL_sv_yes) mpq_sub(*mpq_t_obj, *mpq_t_obj, *a);
-       else mpq_sub(*mpq_t_obj, *a, *mpq_t_obj);
+       if(third == &PL_sv_yes) mpq_sub(*mpq_t_obj, *mpq_t_obj, *(INT2PTR(mpq_t *, SvIV(SvRV(a)))));
+       else mpq_sub(*mpq_t_obj, *(INT2PTR(mpq_t *, SvIV(SvRV(a)))), *mpq_t_obj);
        return obj_ref;
-       }
+     }
 
      if(sv_isobject(b)) {
        if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPq")) {
-         mpq_sub(*mpq_t_obj, *a, *(INT2PTR(mpq_t *, SvIV(SvRV(b)))));
+         mpq_sub(*mpq_t_obj, *(INT2PTR(mpq_t *, SvIV(SvRV(a)))), *(INT2PTR(mpq_t *, SvIV(SvRV(b)))));
          return obj_ref;
-         }
        }
+       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::MPFR")) {
+         dSP;
+         SV * ret;
+         int count;
+
+         ENTER;
+
+         PUSHMARK(SP);
+         XPUSHs(b);
+         XPUSHs(a);
+         XPUSHs(sv_2mortal(&PL_sv_yes));
+         PUTBACK;
+
+         count = call_pv("Math::MPFR::overload_sub", G_SCALAR);
+
+         SPAGAIN;
+
+         if (count != 1)
+           croak("Error in Math::GMPq::overload_sub callback to Math::MPFR::overload_sub\n");
+
+         ret = POPs;
+
+         /* Avoid "Attempt to free unreferenced scalar" warning */
+         SvREFCNT_inc(ret);
+         LEAVE;
+         return ret;
+       }
+     }
 
      croak("Invalid argument supplied to Math::GMPq::overload_sub function");
 
 }
 
-SV * overload_div(mpq_t * a, SV * b, SV * third) {
+SV * overload_div(SV * a, SV * b, SV * third) {
      mpq_t * mpq_t_obj;
      SV * obj_ref, * obj;
 
-     New(1, mpq_t_obj, 1, mpq_t);
-     if(mpq_t_obj == NULL) croak("Failed to allocate memory in overload_div function");
-     obj_ref = newSV(0);
-     obj = newSVrv(obj_ref, "Math::GMPq");
-     mpq_init(*mpq_t_obj);
-     sv_setiv(obj, INT2PTR(IV, mpq_t_obj));
-     SvREADONLY_on(obj);
+     if(!sv_isobject(b) || strNE(HvNAME(SvSTASH(SvRV(b))), "Math::MPFR")) {
+       New(1, mpq_t_obj, 1, mpq_t);
+       if(mpq_t_obj == NULL) croak("Failed to allocate memory in overload_div function");
+       obj_ref = newSV(0);
+       obj = newSVrv(obj_ref, "Math::GMPq");
+       mpq_init(*mpq_t_obj);
+       sv_setiv(obj, INT2PTR(IV, mpq_t_obj));
+       SvREADONLY_on(obj);
+     }
 
 #ifndef USE_64_BIT_INT
      if(SvIOK(b)) {
        mpq_set_d(*mpq_t_obj, SvNV(b));
-       if(third == &PL_sv_yes) mpq_div(*mpq_t_obj, *mpq_t_obj, *a);
-       else mpq_div(*mpq_t_obj, *a, *mpq_t_obj);
+       if(third == &PL_sv_yes) mpq_div(*mpq_t_obj, *mpq_t_obj, *(INT2PTR(mpq_t *, SvIV(SvRV(a)))));
+       else mpq_div(*mpq_t_obj, *(INT2PTR(mpq_t *, SvIV(SvRV(a)))), *mpq_t_obj);
        return obj_ref;
-       }
+     }
 #else
      if(SvIOK(b)) {
        if(mpq_set_str(*mpq_t_obj, SvPV_nolen(b), 0))
          croak("Invalid string supplied to Math::GMPq::overload_div");
-       if(third == &PL_sv_yes) mpq_div(*mpq_t_obj, *mpq_t_obj, *a);
-       else mpq_div(*mpq_t_obj, *a, *mpq_t_obj);
+       if(third == &PL_sv_yes) mpq_div(*mpq_t_obj, *mpq_t_obj, *(INT2PTR(mpq_t *, SvIV(SvRV(a)))));
+       else mpq_div(*mpq_t_obj, *(INT2PTR(mpq_t *, SvIV(SvRV(a)))), *mpq_t_obj);
        return obj_ref;
-       }
+     }
 #endif
 
      if(SvNOK(b)) {
@@ -544,27 +633,54 @@ SV * overload_div(mpq_t * a, SV * b, SV * third) {
 #else
        mpq_set_d(*mpq_t_obj, SvNV(b));
 #endif
-       if(third == &PL_sv_yes) mpq_div(*mpq_t_obj, *mpq_t_obj, *a);
-       else mpq_div(*mpq_t_obj, *a, *mpq_t_obj);
+       if(third == &PL_sv_yes) mpq_div(*mpq_t_obj, *mpq_t_obj, *(INT2PTR(mpq_t *, SvIV(SvRV(a)))));
+       else mpq_div(*mpq_t_obj, *(INT2PTR(mpq_t *, SvIV(SvRV(a)))), *mpq_t_obj);
        return obj_ref;
-       }
+     }
 
 
      if(SvPOK(b)) {
        if(mpq_set_str(*mpq_t_obj, SvPV_nolen(b), 0))
          croak("Invalid string supplied to Math::GMPq::overload_div");
        mpq_canonicalize(*mpq_t_obj);
-       if(third == &PL_sv_yes) mpq_div(*mpq_t_obj, *mpq_t_obj, *a);
-       else mpq_div(*mpq_t_obj, *a, *mpq_t_obj);
+       if(third == &PL_sv_yes) mpq_div(*mpq_t_obj, *mpq_t_obj, *(INT2PTR(mpq_t *, SvIV(SvRV(a)))));
+       else mpq_div(*mpq_t_obj, *(INT2PTR(mpq_t *, SvIV(SvRV(a)))), *mpq_t_obj);
        return obj_ref;
-       }
+     }
 
      if(sv_isobject(b)) {
        if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPq")) {
-         mpq_div(*mpq_t_obj, *a, *(INT2PTR(mpq_t *, SvIV(SvRV(b)))));
+         mpq_div(*mpq_t_obj, *(INT2PTR(mpq_t *, SvIV(SvRV(a)))), *(INT2PTR(mpq_t *, SvIV(SvRV(b)))));
          return obj_ref;
-         }
        }
+       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::MPFR")) {
+         dSP;
+         SV * ret;
+         int count;
+
+         ENTER;
+
+         PUSHMARK(SP);
+         XPUSHs(b);
+         XPUSHs(a);
+         XPUSHs(sv_2mortal(&PL_sv_yes));
+         PUTBACK;
+
+         count = call_pv("Math::MPFR::overload_div", G_SCALAR);
+
+         SPAGAIN;
+
+         if (count != 1)
+           croak("Error in Math::GMPq::overload_div callback to Math::MPFR::overload_div\n");
+
+         ret = POPs;
+
+         /* Avoid "Attempt to free unreferenced scalar" warning */
+         SvREFCNT_inc(ret);
+         LEAVE;
+         return ret;
+       }
+     }
 
      croak("Invalid argument supplied to Math::GMPq::overload_div function");
 
@@ -1631,6 +1747,69 @@ SV * ___GMP_CFLAGS(void) {
 #endif
 }
 
+SV * overload_inc(SV * p, SV * second, SV * third) {
+     mpq_t one;
+
+     mpq_init(one);
+     mpq_set_ui(one, 1, 1);
+
+     SvREFCNT_inc(p);
+     mpq_add(*(INT2PTR(mpq_t *, SvIV(SvRV(p)))), *(INT2PTR(mpq_t *, SvIV(SvRV(p)))), one);
+     mpq_clear(one);
+     return p;
+}
+
+SV * overload_dec(SV * p, SV * second, SV * third) {
+     mpq_t one;
+
+     mpq_init(one);
+     mpq_set_ui(one, 1, 1);
+
+     SvREFCNT_inc(p);
+     mpq_sub(*(INT2PTR(mpq_t *, SvIV(SvRV(p)))), *(INT2PTR(mpq_t *, SvIV(SvRV(p)))), one);
+     mpq_clear(one);
+     return p;
+}
+
+SV * _wrap_count() {
+     return newSVuv(PL_sv_count);
+}
+
+SV * overload_pow(SV * p, SV * second, SV * third) {
+     if(sv_isobject(second)) {
+       if(strEQ(HvNAME(SvSTASH(SvRV(second))), "Math::MPFR")) {
+         dSP;
+         SV * ret;
+         int count;
+
+         ENTER;
+
+         PUSHMARK(SP);
+         XPUSHs(second);
+         XPUSHs(p);
+         XPUSHs(sv_2mortal(&PL_sv_yes));
+         PUTBACK;
+
+         count = call_pv("Math::MPFR::overload_pow", G_SCALAR);
+
+         SPAGAIN;
+
+         if (count != 1)
+           croak("Error in Math::GMPq:overload_pow callback to Math::MPFR::overload_pow\n");
+
+         ret = POPs;
+
+         /* Avoid "Attempt to free unreferenced scalar" warning */
+         SvREFCNT_inc(ret);
+         LEAVE;
+         return ret;
+       }
+     }
+
+     croak("Invalid argument supplied to Math::GMPq::overload_pow. The function currently takes only a Math::MPFR object as the exponent - and returns a Math::MPFR object.");
+}
+
+
 
 MODULE = Math::GMPq	PACKAGE = Math::GMPq	
 
@@ -2246,25 +2425,25 @@ get_refcnt (s)
 
 SV *
 overload_mul (a, b, third)
-	mpq_t *	a
+	SV *	a
 	SV *	b
 	SV *	third
 
 SV *
 overload_add (a, b, third)
-	mpq_t *	a
+	SV *	a
 	SV *	b
 	SV *	third
 
 SV *
 overload_sub (a, b, third)
-	mpq_t *	a
+	SV *	a
 	SV *	b
 	SV *	third
 
 SV *
 overload_div (a, b, third)
-	mpq_t *	a
+	SV *	a
 	SV *	b
 	SV *	third
 
@@ -2427,4 +2606,25 @@ ___GMP_CC ()
 SV *
 ___GMP_CFLAGS ()
 		
+
+SV *
+overload_inc (p, second, third)
+	SV *	p
+	SV *	second
+	SV *	third
+
+SV *
+overload_dec (p, second, third)
+	SV *	p
+	SV *	second
+	SV *	third
+
+SV *
+_wrap_count ()
+
+SV *
+overload_pow (p, second, third)
+	SV *	p
+	SV *	second
+	SV *	third
 
