@@ -74,13 +74,13 @@ else {print "not ok 1 $ok\n"}
 
 $ok = '';
 my $buffer = 'XOXO' x 10;
-my $buf = $buffer;
+my $buf = "$buffer";
 
 Rmpq_sprintf($buf, "The mpq object: %Qd", $mp);
 if ($buf eq 'The mpq object: -1234565') {$ok .= 'a'}
 else {warn "2a got: $buf\n"}
 
-$buf = $buffer;
+$buf = "$buffer";
 $mp *= -1;
 
 my $ret = Rmpq_sprintf_ret($buf, "The mpq object: %Qd", $mp);

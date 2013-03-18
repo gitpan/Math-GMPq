@@ -341,8 +341,11 @@ SV * get_refcnt(SV * s) {
 SV * overload_mul(SV * a, SV * b, SV * third) {
      mpq_t * mpq_t_obj;
      SV * obj_ref, * obj;
+     const char * h;
 
-     if(!sv_isobject(b) || strNE(HvNAME(SvSTASH(SvRV(b))), "Math::MPFR")) {
+     if(sv_isobject(b)) h = HvNAME(SvSTASH(SvRV(b)));
+
+     if(!sv_isobject(b) || strNE(h, "Math::MPFR")) {
        New(1, mpq_t_obj, 1, mpq_t);
        if(mpq_t_obj == NULL) croak("Failed to allocate memory in overload_mul function");
        obj_ref = newSV(0);
@@ -386,11 +389,11 @@ SV * overload_mul(SV * a, SV * b, SV * third) {
      }
 
      if(sv_isobject(b)) {
-       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPq")) {
+       if(strEQ(h, "Math::GMPq")) {
          mpq_mul(*mpq_t_obj, *(INT2PTR(mpq_t *, SvIV(SvRV(a)))), *(INT2PTR(mpq_t *, SvIV(SvRV(b)))));
          return obj_ref;
        }
-       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::MPFR")) {
+       if(strEQ(h, "Math::MPFR")) {
          dSP;
          SV * ret;
          int count;
@@ -425,8 +428,11 @@ SV * overload_mul(SV * a, SV * b, SV * third) {
 SV * overload_add(SV * a, SV * b, SV * third) {
      mpq_t * mpq_t_obj;
      SV * obj_ref, * obj;
+     const char *h;
 
-     if(!sv_isobject(b) || strNE(HvNAME(SvSTASH(SvRV(b))), "Math::MPFR")) {
+     if(sv_isobject(b)) h = HvNAME(SvSTASH(SvRV(b)));
+
+     if(!sv_isobject(b) || strNE(h, "Math::MPFR")) {
        New(1, mpq_t_obj, 1, mpq_t);
        if(mpq_t_obj == NULL) croak("Failed to allocate memory in overload_add function");
        obj_ref = newSV(0);
@@ -471,11 +477,11 @@ SV * overload_add(SV * a, SV * b, SV * third) {
      }
 
      if(sv_isobject(b)) {
-       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPq")) {
+       if(strEQ(h, "Math::GMPq")) {
          mpq_add(*mpq_t_obj, *(INT2PTR(mpq_t *, SvIV(SvRV(a)))), *(INT2PTR(mpq_t *, SvIV(SvRV(b)))));
          return obj_ref;
        }
-       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::MPFR")) {
+       if(strEQ(h, "Math::MPFR")) {
          dSP;
          SV * ret;
          int count;
@@ -510,8 +516,11 @@ SV * overload_add(SV * a, SV * b, SV * third) {
 SV * overload_sub(SV * a, SV * b, SV * third) {
      mpq_t * mpq_t_obj;
      SV * obj_ref, * obj;
+     const char *h;
 
-     if(!sv_isobject(b) || strNE(HvNAME(SvSTASH(SvRV(b))), "Math::MPFR")) {
+     if(sv_isobject(b)) h = HvNAME(SvSTASH(SvRV(b)));
+
+     if(!sv_isobject(b) || strNE(h, "Math::MPFR")) {
        New(1, mpq_t_obj, 1, mpq_t);
        if(mpq_t_obj == NULL) croak("Failed to allocate memory in overload_sub function");
        obj_ref = newSV(0);
@@ -559,11 +568,11 @@ SV * overload_sub(SV * a, SV * b, SV * third) {
      }
 
      if(sv_isobject(b)) {
-       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPq")) {
+       if(strEQ(h, "Math::GMPq")) {
          mpq_sub(*mpq_t_obj, *(INT2PTR(mpq_t *, SvIV(SvRV(a)))), *(INT2PTR(mpq_t *, SvIV(SvRV(b)))));
          return obj_ref;
        }
-       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::MPFR")) {
+       if(strEQ(h, "Math::MPFR")) {
          dSP;
          SV * ret;
          int count;
@@ -599,8 +608,11 @@ SV * overload_sub(SV * a, SV * b, SV * third) {
 SV * overload_div(SV * a, SV * b, SV * third) {
      mpq_t * mpq_t_obj;
      SV * obj_ref, * obj;
+     const char *h;
 
-     if(!sv_isobject(b) || strNE(HvNAME(SvSTASH(SvRV(b))), "Math::MPFR")) {
+     if(sv_isobject(b)) h = HvNAME(SvSTASH(SvRV(b)));
+
+     if(!sv_isobject(b) || strNE(h, "Math::MPFR")) {
        New(1, mpq_t_obj, 1, mpq_t);
        if(mpq_t_obj == NULL) croak("Failed to allocate memory in overload_div function");
        obj_ref = newSV(0);
@@ -649,11 +661,11 @@ SV * overload_div(SV * a, SV * b, SV * third) {
      }
 
      if(sv_isobject(b)) {
-       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPq")) {
+       if(strEQ(h, "Math::GMPq")) {
          mpq_div(*mpq_t_obj, *(INT2PTR(mpq_t *, SvIV(SvRV(a)))), *(INT2PTR(mpq_t *, SvIV(SvRV(b)))));
          return obj_ref;
        }
-       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::MPFR")) {
+       if(strEQ(h, "Math::MPFR")) {
          dSP;
          SV * ret;
          int count;
@@ -789,7 +801,8 @@ SV * overload_gt(mpq_t * a, SV * b, SV * third) {
        }
 
      if(sv_isobject(b)) {
-       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPq")) {
+       const char *h = HvNAME(SvSTASH(SvRV(b)));
+       if(strEQ(h, "Math::GMPq")) {
          ret = mpq_cmp(*a, *(INT2PTR(mpq_t *, SvIV(SvRV(b)))));
          if(ret > 0) return newSViv(1);
          return newSViv(0);
@@ -857,7 +870,8 @@ SV * overload_gte(mpq_t * a, SV * b, SV * third) {
        }
 
      if(sv_isobject(b)) {
-       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPq")) {
+       const char *h = HvNAME(SvSTASH(SvRV(b)));
+       if(strEQ(h, "Math::GMPq")) {
          ret = mpq_cmp(*a, *(INT2PTR(mpq_t *, SvIV(SvRV(b)))));
          if(ret >= 0) return newSViv(1);
          return newSViv(0);
@@ -925,7 +939,8 @@ SV * overload_lt(mpq_t * a, SV * b, SV * third) {
        }
 
      if(sv_isobject(b)) {
-       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPq")) {
+       const char *h = HvNAME(SvSTASH(SvRV(b)));
+       if(strEQ(h, "Math::GMPq")) {
          ret = mpq_cmp(*a, *(INT2PTR(mpq_t *, SvIV(SvRV(b)))));
          if(ret < 0) return newSViv(1);
          return newSViv(0);
@@ -993,7 +1008,8 @@ SV * overload_lte(mpq_t * a, SV * b, SV * third) {
        }
 
      if(sv_isobject(b)) {
-       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPq")) {
+       const char *h = HvNAME(SvSTASH(SvRV(b)));
+       if(strEQ(h, "Math::GMPq")) {
          ret = mpq_cmp(*a, *(INT2PTR(mpq_t *, SvIV(SvRV(b)))));
          if(ret <= 0) return newSViv(1);
          return newSViv(0);
@@ -1056,7 +1072,8 @@ SV * overload_spaceship(mpq_t * a, SV * b, SV * third) {
        }
 
      if(sv_isobject(b)) {
-       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPq")) {
+       const char *h = HvNAME(SvSTASH(SvRV(b)));
+       if(strEQ(h, "Math::GMPq")) {
          ret = mpq_cmp(*a, *(INT2PTR(mpq_t *, SvIV(SvRV(b)))));
          return newSViv(ret);
          }
@@ -1120,7 +1137,8 @@ SV * overload_equiv(mpq_t * a, SV * b, SV * third) {
        }
 
      if(sv_isobject(b)) {
-       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPq")) {
+       const char *h = HvNAME(SvSTASH(SvRV(b)));
+       if(strEQ(h, "Math::GMPq")) {
          ret = mpq_cmp(*a, *(INT2PTR(mpq_t *, SvIV(SvRV(b)))));
          if(ret == 0) return newSViv(1);
          return newSViv(0);
@@ -1188,7 +1206,8 @@ SV * overload_not_equiv(mpq_t * a, SV * b, SV * third) {
        }
 
      if(sv_isobject(b)) {
-       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPq")) {
+       const char *h = HvNAME(SvSTASH(SvRV(b)));
+       if(strEQ(h, "Math::GMPq")) {
          ret = mpq_cmp(*a, *(INT2PTR(mpq_t *, SvIV(SvRV(b)))));
          if(ret != 0) return newSViv(1);
          return newSViv(0);
@@ -1281,7 +1300,8 @@ SV * overload_mul_eq(SV * a, SV * b, SV * third) {
        }
 
      if(sv_isobject(b)) {
-       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPq")) {
+       const char *h = HvNAME(SvSTASH(SvRV(b)));
+       if(strEQ(h, "Math::GMPq")) {
          mpq_mul(*(INT2PTR(mpq_t *, SvIV(SvRV(a)))), *(INT2PTR(mpq_t *, SvIV(SvRV(a)))), *(INT2PTR(mpq_t *, SvIV(SvRV(b)))));
          return a;
          }
@@ -1343,7 +1363,8 @@ SV * overload_add_eq(SV * a, SV * b, SV * third) {
        }
 
      if(sv_isobject(b)) {
-       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPq")) {
+       const char *h = HvNAME(SvSTASH(SvRV(b)));
+       if(strEQ(h, "Math::GMPq")) {
          mpq_add(*(INT2PTR(mpq_t *, SvIV(SvRV(a)))), *(INT2PTR(mpq_t *, SvIV(SvRV(a)))), *(INT2PTR(mpq_t *, SvIV(SvRV(b)))));
          return a;
          }
@@ -1404,7 +1425,8 @@ SV * overload_sub_eq(SV * a, SV * b, SV * third) {
        }
 
      if(sv_isobject(b)) {
-       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPq")) {
+       const char *h = HvNAME(SvSTASH(SvRV(b)));
+       if(strEQ(h, "Math::GMPq")) {
          mpq_sub(*(INT2PTR(mpq_t *, SvIV(SvRV(a)))), *(INT2PTR(mpq_t *, SvIV(SvRV(a)))), *(INT2PTR(mpq_t *, SvIV(SvRV(b)))));
          return a;
          }
@@ -1466,7 +1488,8 @@ SV * overload_div_eq(SV * a, SV * b, SV * third) {
        }
 
      if(sv_isobject(b)) {
-       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPq")) {
+       const char *h = HvNAME(SvSTASH(SvRV(b)));
+       if(strEQ(h, "Math::GMPq")) {
          mpq_div(*(INT2PTR(mpq_t *, SvIV(SvRV(a)))), *(INT2PTR(mpq_t *, SvIV(SvRV(a)))), *(INT2PTR(mpq_t *, SvIV(SvRV(b)))));
          return a;
          }
@@ -1484,21 +1507,22 @@ SV * gmp_v(void) {
 SV * wrap_gmp_printf(SV * a, SV * b) {
      int ret;
      if(sv_isobject(b)) { 
-       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPz") ||
-         strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMP") ||
-         strEQ(HvNAME(SvSTASH(SvRV(b))), "GMP::Mpz")) {
+       const char *h = HvNAME(SvSTASH(SvRV(b)));
+       if(strEQ(h, "Math::GMPz") ||
+         strEQ(h, "Math::GMP") ||
+         strEQ(h, "GMP::Mpz")) {
          ret = gmp_printf(SvPV_nolen(a), *(INT2PTR(mpz_t *, SvIV(SvRV(b)))));
          fflush(stdout);
          return newSViv(ret);
        }
-       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPq") ||
-         strEQ(HvNAME(SvSTASH(SvRV(b))), "GMP::Mpq")) {
+       if(strEQ(h, "Math::GMPq") ||
+         strEQ(h, "GMP::Mpq")) {
          ret = gmp_printf(SvPV_nolen(a), *(INT2PTR(mpq_t *, SvIV(SvRV(b)))));
          fflush(stdout);
          return newSViv(ret);
        }
-       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPf") ||
-         strEQ(HvNAME(SvSTASH(SvRV(b))), "GMP::Mpf")) {
+       if(strEQ(h, "Math::GMPf") ||
+         strEQ(h, "GMP::Mpf")) {
          ret = gmp_printf(SvPV_nolen(a), *(INT2PTR(mpf_t *, SvIV(SvRV(b)))));
          fflush(stdout);
          return newSViv(ret);
@@ -1533,22 +1557,23 @@ SV * wrap_gmp_printf(SV * a, SV * b) {
 
 SV * wrap_gmp_fprintf(FILE * stream, SV * a, SV * b) {
      int ret;
-     if(sv_isobject(b)) { 
-       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPz") ||
-         strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMP") ||
-         strEQ(HvNAME(SvSTASH(SvRV(b))), "GMP::Mpz")) {
+     if(sv_isobject(b)) {
+       const char *h = HvNAME(SvSTASH(SvRV(b)));
+       if(strEQ(h, "Math::GMPz") ||
+         strEQ(h, "Math::GMP") ||
+         strEQ(h, "GMP::Mpz")) {
          ret = gmp_fprintf(stream, SvPV_nolen(a), *(INT2PTR(mpz_t *, SvIV(SvRV(b)))));
          fflush(stream);
          return newSViv(ret);
        }
-       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPq") ||
-         strEQ(HvNAME(SvSTASH(SvRV(b))), "GMP::Mpq")) {
+       if(strEQ(h, "Math::GMPq") ||
+         strEQ(h, "GMP::Mpq")) {
          ret = gmp_fprintf(stream, SvPV_nolen(a), *(INT2PTR(mpq_t *, SvIV(SvRV(b)))));
          fflush(stream);
          return newSViv(ret);
        }
-       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPf") ||
-         strEQ(HvNAME(SvSTASH(SvRV(b))), "GMP::Mpf")) {
+       if(strEQ(h, "Math::GMPf") ||
+         strEQ(h, "GMP::Mpf")) {
          ret = gmp_fprintf(stream, SvPV_nolen(a), *(INT2PTR(mpf_t *, SvIV(SvRV(b)))));
          fflush(stream);
          return newSViv(ret);
@@ -1583,22 +1608,23 @@ SV * wrap_gmp_fprintf(FILE * stream, SV * a, SV * b) {
 
 SV * wrap_gmp_sprintf(char * stream, SV * a, SV * b) {
      int ret;
-     if(sv_isobject(b)) { 
-       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPz") ||
-         strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMP") ||
-         strEQ(HvNAME(SvSTASH(SvRV(b))), "GMP::Mpz")) {
+     if(sv_isobject(b)) {
+       const char *h = HvNAME(SvSTASH(SvRV(b))); 
+       if(strEQ(h, "Math::GMPz") ||
+         strEQ(h, "Math::GMP") ||
+         strEQ(h, "GMP::Mpz")) {
          ret = gmp_sprintf(stream, SvPV_nolen(a), *(INT2PTR(mpz_t *, SvIV(SvRV(b)))));
          return newSViv(ret);
        }
 
-       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPq") ||
-         strEQ(HvNAME(SvSTASH(SvRV(b))), "GMP::Mpq")) {
+       if(strEQ(h, "Math::GMPq") ||
+         strEQ(h, "GMP::Mpq")) {
          ret = gmp_sprintf(stream, SvPV_nolen(a), *(INT2PTR(mpq_t *, SvIV(SvRV(b)))));
          return newSViv(ret);
        }
 
-       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPf") ||
-         strEQ(HvNAME(SvSTASH(SvRV(b))), "GMP::Mpf")) {
+       if(strEQ(h, "Math::GMPf") ||
+         strEQ(h, "GMP::Mpf")) {
          ret = gmp_sprintf(stream, SvPV_nolen(a), *(INT2PTR(mpf_t *, SvIV(SvRV(b)))));
          return newSViv(ret);
        }
@@ -1631,22 +1657,23 @@ SV * wrap_gmp_sprintf(char * stream, SV * a, SV * b) {
 
 SV * wrap_gmp_snprintf(char * stream, SV * bytes, SV * a, SV * b) {
      int ret;
-     if(sv_isobject(b)) { 
-       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPz") ||
-         strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMP") ||
-         strEQ(HvNAME(SvSTASH(SvRV(b))), "GMP::Mpz")) {
+     if(sv_isobject(b)) {
+       const char *h = HvNAME(SvSTASH(SvRV(b))); 
+       if(strEQ(h, "Math::GMPz") ||
+         strEQ(h, "Math::GMP") ||
+         strEQ(h, "GMP::Mpz")) {
          ret = gmp_snprintf(stream, (size_t)SvUV(bytes), SvPV_nolen(a), *(INT2PTR(mpz_t *, SvIV(SvRV(b)))));
          return newSViv(ret);
        }
 
-       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPq") ||
-         strEQ(HvNAME(SvSTASH(SvRV(b))), "GMP::Mpq")) {
+       if(strEQ(h, "Math::GMPq") ||
+         strEQ(h, "GMP::Mpq")) {
          ret = gmp_snprintf(stream, (size_t)SvUV(bytes), SvPV_nolen(a), *(INT2PTR(mpq_t *, SvIV(SvRV(b)))));
          return newSViv(ret);
        }
 
-       if(strEQ(HvNAME(SvSTASH(SvRV(b))), "Math::GMPf") ||
-         strEQ(HvNAME(SvSTASH(SvRV(b))), "GMP::Mpf")) {
+       if(strEQ(h, "Math::GMPf") ||
+         strEQ(h, "GMP::Mpf")) {
          ret = gmp_snprintf(stream, (size_t)SvUV(bytes), SvPV_nolen(a), *(INT2PTR(mpf_t *, SvIV(SvRV(b)))));
          return newSViv(ret);
        }
@@ -1683,7 +1710,8 @@ SV * _itsa(SV * a) {
      if(SvNOK(a)) return newSVuv(3);
      if(SvPOK(a)) return newSVuv(4);
      if(sv_isobject(a)) {
-       if(strEQ(HvNAME(SvSTASH(SvRV(a))), "Math::GMPq")) return newSVuv(7);
+       const char *h = HvNAME(SvSTASH(SvRV(a)));
+       if(strEQ(h, "Math::GMPq")) return newSVuv(7);
        }
      return newSVuv(0);
 }
@@ -1777,7 +1805,8 @@ SV * _wrap_count() {
 
 SV * overload_pow(SV * p, SV * second, SV * third) {
      if(sv_isobject(second)) {
-       if(strEQ(HvNAME(SvSTASH(SvRV(second))), "Math::MPFR")) {
+       const char *h = HvNAME(SvSTASH(SvRV(second)));
+       if(strEQ(h, "Math::MPFR")) {
          dSP;
          SV * ret;
          int count;

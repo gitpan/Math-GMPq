@@ -126,8 +126,14 @@ if(Math::GMPq::_has_longlong()) {
   else{warn "3i: Should have $f27 == $f28\n"}
 }
 else {
-  if($f27 != $f28) {$ok .= 'i'}
-  else{warn "3i: Should have $f27 != $f28\n"}
+  if(Math::GMPq::_has_longdouble()) {
+    if($f27 == $f28) {$ok .= 'i'}
+    else{warn "3i: Should have $f27 == $f28\n"}
+  }
+  else {
+    if($f27 != $f28) {$ok .= 'i'}
+    else{warn "3i: Should have $f27 != $f28\n"}
+  }
 }
 
 if($ok eq 'abcdefghi') {print "ok 3\n"}

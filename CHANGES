@@ -1,3 +1,9 @@
+0.36
+ - Fix test 3i in new.t. (It wasn't allowing for the case where perl was built
+   with long double support, but ivsize was still 4.
+ - Alter the way that strEQ gets hold of HvNAME(SvSTASH(SvRV(sv))) - so that -Wall
+    doesn't emit "null argument" warnings. (Thanks Daniel Kahn Gillmor.)
+
 0.35
  - Add Math::GMPq::V
  - Add overload_inc and overload_dec functions.
