@@ -76,20 +76,20 @@ $ok = '';
 my $buffer = 'XOXO' x 10;
 my $buf = "$buffer";
 
-Rmpq_sprintf($buf, "The mpq object: %Qd", $mp);
+Rmpq_sprintf($buf, "The mpq object: %Qd", $mp, 40);
 if ($buf eq 'The mpq object: -1234565') {$ok .= 'a'}
 else {warn "2a got: $buf\n"}
 
 $buf = "$buffer";
 $mp *= -1;
 
-my $ret = Rmpq_sprintf_ret($buf, "The mpq object: %Qd", $mp);
-if ($ret eq 'The mpq object: 1234565') {$ok .= 'b'}
-else {warn "2b got: $ret\n"}
-if ($buf eq 'The mpq object: 1234565' . "\0" . 'XOXO' x 4) {$ok .= 'c'}
-else {warn "2c got: $buf\n"}
+my $ret = Rmpq_sprintf($buf, "The mpq object: %Qd", $mp, 40);
+if ($buf eq 'The mpq object: 1234565') {$ok .= 'b'}
+else {warn "2b got: $buf\n"}
+if ($ret == 23) {$ok .= 'c'}
+else {warn "2c got: $ret\n"}
 
-$ret = Rmpq_sprintf($buf, "$ul");
+$ret = Rmpq_sprintf($buf, "$ul", 6);
 if($ret == 5) {$ok .= 'd'}
 else {warn "2d got: $ret\n"}
 if ($buf eq '56790') {$ok .= 'e'}
@@ -109,20 +109,23 @@ eval {Rmpq_fprintf(\*STDOUT, "%Qd", $mbi);};
 if($@ =~ /Unrecognised object/) {$ok .= 'b'}
 else {warn "3b got: $@\n"}
 
-eval {Rmpq_sprintf($buf, "%Qd", $mbi);};
+eval {Rmpq_sprintf($buf, "%Qd", $mbi, 50);};
 if($@ =~ /Unrecognised object/) {$ok .= 'c'}
 else {warn "3c got: $@\n"}
 
-eval {Rmpq_sprintf_ret($buf, "%Qd", $mbi);};
-if($@ =~ /Unrecognised object/) {$ok .= 'd'}
-else {warn "3d got: $@\n"}
+# no longer have Rmpq_sprintf_ret
+#eval {Rmpq_sprintf_ret($buf, "%Qd", $mbi, 50);};
+#if($@ =~ /Unrecognised object/) {$ok .= 'd'}
+#else {warn "3d got: $@\n"}
+
+$ok .= 'd';
 
 eval {Rmpq_fprintf(\*STDOUT, "%Qd", $mbi, $ul);};
 if($@ =~ /must pass 3 arguments/) {$ok .= 'e'}
 else {warn "3e got: $@\n"}
 
-eval {Rmpq_sprintf($buf, "%Qd", $mbi, $ul);};
-if($@ =~ /must pass 3 arguments/) {$ok .= 'f'}
+eval {Rmpq_sprintf($buf, "%Qd", $mbi, $ul, 50);};
+if($@ =~ /must pass 4 arguments/) {$ok .= 'f'}
 else {warn "3f got: $@\n"}
 
 if($ok eq 'abcdef') {print "ok 3\n"}
@@ -208,12 +211,12 @@ $ok = '';
 $mp *= -1;
 
 $buf = 'X' x 10;
-$ret = Rmpq_snprintf_ret($buf, 5, "%Qd", $mp);
+$ret = Rmpq_snprintf($buf, 5, "%Qd", $mp, 10);
 
-if($ret eq '-123') {$ok .= 'a'}
-else {warn "7a: $ret\n"}
+if($ret == 8 && $buf eq '-123') {$ok .= 'a'}
+else {warn "7a: $ret $buf\n"}
 
-$ret = Rmpq_snprintf($buf, 6, "%Qd", $mp);
+$ret = Rmpq_snprintf($buf, 6, "%Qd", $mp, 10);
 
 if($ret == 8) {$ok .= 'b'}
 else {warn "7b: $ret\n"}

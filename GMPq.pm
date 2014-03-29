@@ -17,7 +17,7 @@
     use constant _MATH_MPC_T    => 10;
 
 use subs qw( __GNU_MP_VERSION __GNU_MP_VERSION_MINOR __GNU_MP_VERSION_PATCHLEVEL
-             __GMP_CC __GMP_CFLAGS);
+             __GNU_MP_RELEASE __GMP_CC __GMP_CFLAGS);
 
 use overload
     '++'   => \&overload_inc,
@@ -45,7 +45,7 @@ use overload
 
     @Math::GMPq::EXPORT_OK = qw(
 __GNU_MP_VERSION __GNU_MP_VERSION_MINOR __GNU_MP_VERSION_PATCHLEVEL
-__GMP_CC __GMP_CFLAGS
+__GNU_MP_RELEASE __GMP_CC __GMP_CFLAGS
 Rmpq_abs Rmpq_add Rmpq_canonicalize Rmpq_clear Rmpq_cmp Rmpq_cmp_si Rmpq_cmp_ui
 Rmpq_create_noval Rmpq_denref Rmpq_div Rmpq_div_2exp Rmpq_equal 
 Rmpq_fprintf
@@ -54,7 +54,7 @@ Rmpq_get_den Rmpq_get_num Rmpq_get_str Rmpq_init Rmpq_init_nobless Rmpq_inp_str
 Rmpq_inv Rmpq_mul Rmpq_mul_2exp Rmpq_neg Rmpq_numref Rmpq_out_str Rmpq_printf 
 Rmpq_set Rmpq_set_d Rmpq_set_den Rmpq_set_f Rmpq_set_num Rmpq_set_si Rmpq_set_str
 Rmpq_set_ui Rmpq_set_z Rmpq_sgn 
-Rmpq_sprintf Rmpq_sprintf_ret Rmpq_snprintf Rmpq_snprintf_ret
+Rmpq_sprintf Rmpq_snprintf
 Rmpq_sub Rmpq_swap
 TRmpq_out_str TRmpq_inp_str
 qgmp_randseed qgmp_randseed_ui qgmp_randclear
@@ -63,7 +63,7 @@ qgmp_randinit_set qgmp_randinit_default_nobless qgmp_randinit_mt_nobless
 qgmp_randinit_lc_2exp_nobless qgmp_randinit_lc_2exp_size_nobless qgmp_randinit_set_nobless
 qgmp_urandomb_ui qgmp_urandomm_ui
     );
-    our $VERSION = '0.36';
+    our $VERSION = '0.37';
     $VERSION = eval $VERSION;
 
     DynaLoader::bootstrap Math::GMPq $VERSION;
@@ -77,7 +77,7 @@ Rmpq_get_den Rmpq_get_num Rmpq_get_str Rmpq_init Rmpq_init_nobless Rmpq_inp_str
 Rmpq_inv Rmpq_mul Rmpq_mul_2exp Rmpq_neg Rmpq_numref Rmpq_out_str Rmpq_printf 
 Rmpq_set Rmpq_set_d Rmpq_set_den Rmpq_set_f Rmpq_set_num Rmpq_set_si Rmpq_set_str
 Rmpq_set_ui Rmpq_set_z Rmpq_sgn 
-Rmpq_sprintf Rmpq_sprintf_ret Rmpq_snprintf Rmpq_snprintf_ret
+Rmpq_sprintf Rmpq_snprintf
 Rmpq_sub Rmpq_swap
 TRmpq_out_str TRmpq_inp_str
 qgmp_randseed qgmp_randseed_ui qgmp_randclear
@@ -235,38 +235,37 @@ sub Rmpq_fprintf {
 }
 
 sub Rmpq_sprintf {
-    push @_, 0 if @_ == 2; # add a dummy third argument
-    die "Rmpq_sprintf must pass 3 arguments: buffer, format string, and variable" if @_ != 3;
-    my $len = wrap_gmp_sprintf(@_);
-    $_[0] = substr($_[0], 0, $len);
-    return $len;
-}
+    my $len;
 
-sub Rmpq_sprintf_ret {
-    push @_, 0 if @_ == 2; # add a dummy third argument
-    die "Rmpq_sprintf_ret must pass 3 arguments: buffer, format string, and variable" if @_ != 3;
-    my $len = wrap_gmp_sprintf(@_);
-    return substr($_[0], 0, $len);
+    if(@_ == 3) {      # optional arg wasn't provided
+      $len = wrap_gmp_sprintf($_[0], $_[1], 0, $_[2]);  # Set missing arg to 0
+    }
+    else {
+      die "Rmpq_sprintf must pass 4 arguments: buffer, format string, variable, buflen" if @_ != 4;
+      $len = wrap_gmp_sprintf(@_);
+    }
+
+    return $len;
 }
 
 sub Rmpq_snprintf {
-    push @_, 0 if @_ == 3; # add a dummy third argument
-    die "Rmpq_snprintf must pass 4 arguments: buffer, bytes written, format string, and variable" if @_ != 4;
-    my $len = wrap_gmp_snprintf(@_);
-    $_[0] = substr($_[0], 0, $_[1] - 1);
-    return $len;
-}
+    my $len;
 
-sub Rmpq_snprintf_ret {
-    push @_, 0 if @_ == 3; # add a dummy third argument
-    die "Rmpq_snprintf_ret must pass 4 arguments: buffer, bytes written, format string, and variable" if @_ != 4;
-    my $len = wrap_gmp_snprintf(@_);
-    return substr($_[0], 0, $_[1] - 1);
+    if(@_ == 4) {      # optional arg wasn't provided
+      $len = wrap_gmp_snprintf($_[0], $_[1], $_[2], 0, $_[3]);  # Set missing arg to 0
+    }
+    else {
+      die "Rmpq_snprintf must pass 5 arguments: buffer, bytes written, format string, variable and buflen" if @_ != 5;
+      $len = wrap_gmp_snprintf(@_);
+    }
+
+    return $len;
 }
 
 sub __GNU_MP_VERSION {return ___GNU_MP_VERSION()}
 sub __GNU_MP_VERSION_MINOR {return ___GNU_MP_VERSION_MINOR()}
 sub __GNU_MP_VERSION_PATCHLEVEL {return ___GNU_MP_VERSION_PATCHLEVEL()}
+sub __GNU_MP_RELEASE {return ___GNU_MP_RELEASE()}
 sub __GMP_CC {return ___GMP_CC()}
 sub __GMP_CFLAGS {return ___GMP_CFLAGS()}
 
@@ -857,7 +856,7 @@ __END__
    $si = Rmpq_fprintf($fh, $format_string, $var);
 
     This function (unlike the GMP counterpart) is limited to taking
-    3 arguments - the filehandle, the format string, and the variable
+    3 arguments - the filehandle, the format string, the variable
     to be formatted. That is, you can format only one variable at a time.
     If there is no variable to be formatted, then the final arg
     can be omitted - a suitable dummy arg will be passed to the XS
@@ -867,30 +866,21 @@ __END__
     Returns the number of characters written, or -1 if an error
     occurred.
 
-   $si = Rmpq_sprintf($buffer, $format_string, $var);
+   $si = Rmpq_sprintf($buffer, $format_string, $var, $buflen);
 
     This function (unlike the GMP counterpart) is limited to taking
-    3 arguments - the buffer, the format string, and the variable
-    to be formatted. If there is no variable to be formatted, then the
-    final arg can be omitted - a suitable dummy arg will be passed to
-    the XS code for you. ie the following will work:
-     Rmpq_sprintf($buffer, "hello world\n");
-    $buffer must be large enough to accommodate the formatted string,
-    and is truncated to the length of that formatted string.
-    If you prefer to have the resultant string returned (rather
-    than stored in $buffer), use Rmpq_sprintf_ret instead - which will
-    also leave the length of $buffer unaltered.
+    4 arguments - the buffer, the format string,  the variable to be
+    formatted and the size of the buffer. If there is no variable to
+    be formatted, then the third arg can be omitted - a suitable
+    dummy arg will be passed to the XS code for you. ie the following
+    will work:
+     Rmpf_sprintf($buffer, "hello world", 12);
+    $buffer must be large enough to accommodate the formatted string.
+    The formatted string is placed in $buffer.
     Returns the number of characters written, or -1 if an error
     occurred.
 
-   $string = Rmpq_sprintf_ret($buffer, $format_string, $var);
-
-    As for Rmpq_sprintf, but returns the formatted string, rather than
-    storing it in $buffer. $buffer needs to be large enough to 
-    accommodate the formatted string. The length of $buffer will be
-    unaltered.
-
-   $si = Rmpq_snprintf($buffer, $bytes, $format_string, $var);
+   $si = Rmpq_snprintf($buffer, $bytes, $format_string, $var, $buflen);
 
     Form a null-terminated string in $buffer. No more than $bytes 
     bytes will be written. To get the full output, $bytes must be
@@ -902,24 +892,15 @@ __END__
     If $si >= $bytes then the actual output has been truncated to
     the first $bytes-1 characters, and a null appended.
     This function (unlike the GMP counterpart) is limited to taking
-    4 arguments - the buffer, the maximum number of bytes to be
-    returned, the format string, and the variable to be formatted.
-    If there is no variable to be formatted, then the final arg can
+    5 arguments - the buffer, the maximum number of bytes to be
+    returned, the format string, the variable to be formatted and
+    the size of the buffer.
+    If there is no variable to be formatted, then the 4th arg can
     be omitted - a suitable dummy arg will be passed to the XS code
     for you. ie the following will work:
-     Rmpq_snprintf($buffer, 12, "hello world");
-    If you prefer to have the resultant string returned (rather
-    than stored in $buffer), use Rmpq_snprintf_ret instead - which will
-    also leave the length of $buffer unaltered.
+     Rmpf_snprintf($buffer, 6, "hello world", 12);
 
-   $string = Rmpq_snprintf_ret($buffer, $bytes, $format_string, $var);
-
-    As for Rmpq_snprintf, but returns the formatted string, as well as
-    storing it in $buffer. $buffer needs to be large enough to 
-    accommodate the formatted string. The length of $buffer will be
-    unaltered. The length of $string (as reported by perl's length
-    function) will be no greater than $bytes.
-
+   ################
    ################
 
 =head1 BUGS

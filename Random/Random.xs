@@ -1,3 +1,5 @@
+#define PERL_NO_GET_CONTEXT 1
+
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
@@ -18,7 +20,7 @@
 #  define Newxz(v,n,t) Newz(0,v,n,t)
 #endif
 
-SV * Rgmp_randinit_default(void) {
+SV * Rgmp_randinit_default(pTHX) {
      gmp_randstate_t * rand_obj;
      SV * obj_ref, * obj;
 
@@ -33,7 +35,7 @@ SV * Rgmp_randinit_default(void) {
      return obj_ref;
 }
 
-SV * Rgmp_randinit_mt(void) {
+SV * Rgmp_randinit_mt(pTHX) {
      gmp_randstate_t * rand_obj;
      SV * obj_ref, * obj;
 
@@ -48,7 +50,7 @@ SV * Rgmp_randinit_mt(void) {
      return obj_ref;
 }
 
-SV * Rgmp_randinit_lc_2exp(mpz_t* a, SV * c, SV * m2exp) {
+SV * Rgmp_randinit_lc_2exp(pTHX_ mpz_t* a, SV * c, SV * m2exp) {
      gmp_randstate_t * rand_obj;
      SV * obj_ref, * obj;
 
@@ -63,7 +65,7 @@ SV * Rgmp_randinit_lc_2exp(mpz_t* a, SV * c, SV * m2exp) {
      return obj_ref;
 }
 
-SV * Rgmp_randinit_lc_2exp_size(SV * size) {
+SV * Rgmp_randinit_lc_2exp_size(pTHX_ SV * size) {
      gmp_randstate_t * rand_obj, t;
      SV * obj_ref, * obj;
      int ret;
@@ -86,7 +88,7 @@ SV * Rgmp_randinit_lc_2exp_size(SV * size) {
      return obj_ref;
 }
 
-SV * Rgmp_randinit_set(gmp_randstate_t * op) {
+SV * Rgmp_randinit_set(pTHX_ gmp_randstate_t * op) {
      gmp_randstate_t * rand_obj;
      SV * obj_ref, * obj;
 
@@ -101,20 +103,20 @@ SV * Rgmp_randinit_set(gmp_randstate_t * op) {
      return obj_ref;
 }
 
-SV * Rgmp_urandomb_ui(gmp_randstate_t * state, SV * n) {
+SV * Rgmp_urandomb_ui(pTHX_ gmp_randstate_t * state, SV * n) {
      unsigned long max, req = (unsigned long)SvUV(n);
      max = sizeof(unsigned long) * 8;
      if(req > max) croak("In Math::GMPq::Random::Rgmp_urandomb_ui, requested %u bits, but %u is the maximum allowed", req, max);
      return newSVuv(gmp_urandomb_ui(*state, req));
 }
 
-SV * Rgmp_urandomm_ui(gmp_randstate_t * state, SV * n) {
+SV * Rgmp_urandomm_ui(pTHX_ gmp_randstate_t * state, SV * n) {
      return newSVuv(gmp_urandomm_ui(*state, (unsigned long)SvUV(n)));
 }
 
 /*##########################################*/
 
-SV * Rgmp_randinit_default_nobless(void) {
+SV * Rgmp_randinit_default_nobless(pTHX) {
      gmp_randstate_t * rand_obj;
      SV * obj_ref, * obj;
 
@@ -129,7 +131,7 @@ SV * Rgmp_randinit_default_nobless(void) {
      return obj_ref;
 }
 
-SV * Rgmp_randinit_mt_nobless(void) {
+SV * Rgmp_randinit_mt_nobless(pTHX) {
      gmp_randstate_t * rand_obj;
      SV * obj_ref, * obj;
 
@@ -144,7 +146,7 @@ SV * Rgmp_randinit_mt_nobless(void) {
      return obj_ref;
 }
 
-SV * Rgmp_randinit_lc_2exp_nobless(mpz_t* a, SV * c, SV * m2exp) {
+SV * Rgmp_randinit_lc_2exp_nobless(pTHX_ mpz_t* a, SV * c, SV * m2exp) {
      gmp_randstate_t * rand_obj;
      SV * obj_ref, * obj;
 
@@ -159,7 +161,7 @@ SV * Rgmp_randinit_lc_2exp_nobless(mpz_t* a, SV * c, SV * m2exp) {
      return obj_ref;
 }
 
-SV * Rgmp_randinit_lc_2exp_size_nobless(SV * size) {
+SV * Rgmp_randinit_lc_2exp_size_nobless(pTHX_ SV * size) {
      gmp_randstate_t * rand_obj;
      SV * obj_ref, * obj;
      int ret;
@@ -176,7 +178,7 @@ SV * Rgmp_randinit_lc_2exp_size_nobless(SV * size) {
      return obj_ref;
 }
 
-SV * Rgmp_randinit_set_nobless(gmp_randstate_t * op) {
+SV * Rgmp_randinit_set_nobless(pTHX_ gmp_randstate_t * op) {
      gmp_randstate_t * rand_obj;
      SV * obj_ref, * obj;
 
@@ -193,15 +195,15 @@ SV * Rgmp_randinit_set_nobless(gmp_randstate_t * op) {
 
 /*##########################################*/
 
-void Rgmp_randseed(gmp_randstate_t * state, mpz_t * seed) {
+void Rgmp_randseed(pTHX_ gmp_randstate_t * state, mpz_t * seed) {
      gmp_randseed(*state, *seed);
 }
 
-void Rgmp_randseed_ui(gmp_randstate_t * state, SV * seed) {
+void Rgmp_randseed_ui(pTHX_ gmp_randstate_t * state, SV * seed) {
      gmp_randseed_ui(*state, (unsigned long int)SvUV(seed));
 }
 
-void DESTROY(gmp_randstate_t * p) {
+void DESTROY(pTHX_ gmp_randstate_t * p) {
 /*     printf("Destroying gmp_randstate "); */
      gmp_randclear(*p);
 /*     printf("...cleared "); */
@@ -209,23 +211,23 @@ void DESTROY(gmp_randstate_t * p) {
 /*     printf("...destroyed\n"); */
 }
 
-void Rgmp_randclear(gmp_randstate_t * p) {
+void Rgmp_randclear(pTHX_ gmp_randstate_t * p) {
 /* clear gmp_randstate_t and free the perl object */
      gmp_randclear(*p);
      Safefree(p);
 }
 
-void Rgmp_randclear_state(gmp_randstate_t * p) {
+void Rgmp_randclear_state(pTHX_ gmp_randstate_t * p) {
 /* clear gmp_randstate_t only */
      gmp_randclear(*p);
 }
 
-void Rgmp_randclear_ptr(gmp_randstate_t * p) {
+void Rgmp_randclear_ptr(pTHX_ gmp_randstate_t * p) {
 /* free perl object only */
      Safefree(p);
 }
 
-SV * _wrap_count(void) {
+SV * _wrap_count(pTHX) {
      return newSVuv(PL_sv_count);
 }
 
@@ -237,57 +239,93 @@ PROTOTYPES: DISABLE
 
 SV *
 Rgmp_randinit_default ()
-		
+CODE:
+  RETVAL = Rgmp_randinit_default (aTHX);
+OUTPUT:  RETVAL
+
 
 SV *
 Rgmp_randinit_mt ()
-		
+CODE:
+  RETVAL = Rgmp_randinit_mt (aTHX);
+OUTPUT:  RETVAL
+
 
 SV *
 Rgmp_randinit_lc_2exp (a, c, m2exp)
 	mpz_t *	a
 	SV *	c
 	SV *	m2exp
+CODE:
+  RETVAL = Rgmp_randinit_lc_2exp (aTHX_ a, c, m2exp);
+OUTPUT:  RETVAL
 
 SV *
 Rgmp_randinit_lc_2exp_size (size)
 	SV *	size
+CODE:
+  RETVAL = Rgmp_randinit_lc_2exp_size (aTHX_ size);
+OUTPUT:  RETVAL
 
 SV *
 Rgmp_randinit_set (op)
 	gmp_randstate_t *	op
+CODE:
+  RETVAL = Rgmp_randinit_set (aTHX_ op);
+OUTPUT:  RETVAL
 
 SV *
 Rgmp_urandomb_ui (state, n)
 	gmp_randstate_t *	state
 	SV *	n
+CODE:
+  RETVAL = Rgmp_urandomb_ui (aTHX_ state, n);
+OUTPUT:  RETVAL
 
 SV *
 Rgmp_urandomm_ui (state, n)
 	gmp_randstate_t *	state
 	SV *	n
+CODE:
+  RETVAL = Rgmp_urandomm_ui (aTHX_ state, n);
+OUTPUT:  RETVAL
 
 SV *
 Rgmp_randinit_default_nobless ()
-		
+CODE:
+  RETVAL = Rgmp_randinit_default_nobless (aTHX);
+OUTPUT:  RETVAL
+
 
 SV *
 Rgmp_randinit_mt_nobless ()
-		
+CODE:
+  RETVAL = Rgmp_randinit_mt_nobless (aTHX);
+OUTPUT:  RETVAL
+
 
 SV *
 Rgmp_randinit_lc_2exp_nobless (a, c, m2exp)
 	mpz_t *	a
 	SV *	c
 	SV *	m2exp
+CODE:
+  RETVAL = Rgmp_randinit_lc_2exp_nobless (aTHX_ a, c, m2exp);
+OUTPUT:  RETVAL
 
 SV *
 Rgmp_randinit_lc_2exp_size_nobless (size)
 	SV *	size
+CODE:
+  RETVAL = Rgmp_randinit_lc_2exp_size_nobless (aTHX_ size);
+OUTPUT:  RETVAL
 
 SV *
 Rgmp_randinit_set_nobless (op)
 	gmp_randstate_t *	op
+CODE:
+  RETVAL = Rgmp_randinit_set_nobless (aTHX_ op);
+OUTPUT:  RETVAL
 
 void
 Rgmp_randseed (state, seed)
@@ -297,7 +335,7 @@ Rgmp_randseed (state, seed)
 	I32* temp;
 	PPCODE:
 	temp = PL_markstack_ptr++;
-	Rgmp_randseed(state, seed);
+	Rgmp_randseed(aTHX_ state, seed);
 	if (PL_markstack_ptr != temp) {
           /* truly void, because dXSARGS not invoked */
 	  PL_markstack_ptr = temp;
@@ -314,7 +352,7 @@ Rgmp_randseed_ui (state, seed)
 	I32* temp;
 	PPCODE:
 	temp = PL_markstack_ptr++;
-	Rgmp_randseed_ui(state, seed);
+	Rgmp_randseed_ui(aTHX_ state, seed);
 	if (PL_markstack_ptr != temp) {
           /* truly void, because dXSARGS not invoked */
 	  PL_markstack_ptr = temp;
@@ -330,7 +368,7 @@ DESTROY (p)
 	I32* temp;
 	PPCODE:
 	temp = PL_markstack_ptr++;
-	DESTROY(p);
+	DESTROY(aTHX_ p);
 	if (PL_markstack_ptr != temp) {
           /* truly void, because dXSARGS not invoked */
 	  PL_markstack_ptr = temp;
@@ -346,7 +384,7 @@ Rgmp_randclear (p)
 	I32* temp;
 	PPCODE:
 	temp = PL_markstack_ptr++;
-	Rgmp_randclear(p);
+	Rgmp_randclear(aTHX_ p);
 	if (PL_markstack_ptr != temp) {
           /* truly void, because dXSARGS not invoked */
 	  PL_markstack_ptr = temp;
@@ -362,7 +400,7 @@ Rgmp_randclear_state (p)
 	I32* temp;
 	PPCODE:
 	temp = PL_markstack_ptr++;
-	Rgmp_randclear_state(p);
+	Rgmp_randclear_state(aTHX_ p);
 	if (PL_markstack_ptr != temp) {
           /* truly void, because dXSARGS not invoked */
 	  PL_markstack_ptr = temp;
@@ -378,7 +416,7 @@ Rgmp_randclear_ptr (p)
 	I32* temp;
 	PPCODE:
 	temp = PL_markstack_ptr++;
-	Rgmp_randclear_ptr(p);
+	Rgmp_randclear_ptr(aTHX_ p);
 	if (PL_markstack_ptr != temp) {
           /* truly void, because dXSARGS not invoked */
 	  PL_markstack_ptr = temp;
@@ -389,5 +427,8 @@ Rgmp_randclear_ptr (p)
 
 SV *
 _wrap_count ()
-		
+CODE:
+  RETVAL = _wrap_count (aTHX);
+OUTPUT:  RETVAL
+
 
